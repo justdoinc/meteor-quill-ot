@@ -16,7 +16,9 @@ _.extend Document.prototype,
 
     return new Document(@latest.compose(delta), @)
 
-  merge: (document) ->
+  merge: (document, apply_first) ->
+    if not apply_first?
+      apply_first = false
 
     paths = Document.findShortestPathsToCommonParent(@, document)
 
@@ -34,7 +36,7 @@ _.extend Document.prototype,
     diff_b = path_b[0].latest.diff(document.latest)
 
     # 2. Transform diff_b against diff_a
-    merge_ops = diff_a.transform(diff_b)
+    merge_ops = diff_a.transform(diff_b, apply_first)
 
     return new Document(@latest.compose(merge_ops), [@, document])
 
