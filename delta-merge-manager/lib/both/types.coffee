@@ -7,6 +7,7 @@ Snapshot = (delta, base) ->
     @base = null
 
   @latest = delta
+  @parent_paths = Snapshot.findParentPaths(@)
 
   return @
 
@@ -17,36 +18,66 @@ _.extend Snapshot.prototype,
     return new Snapshot(@latest.compose(delta), @)
 
   merge: (document, apply_first) ->
-    if not apply_first?
-      apply_first = false
+    if apply_first?
+      return Snapshot.mergeSnapshots(@, document)
+    else
+      return Snapshot.mergeSnapshots(document, @)
 
-    paths = Snapshot.findShortestPathsToCommonParent(@, document)
+  toJSON: () ->
 
-    if paths == null
-      throw new Error "No common parent."
+    json =
+      id: @id
+      latest: @latest
+      parents: _.map(@parent_paths, (path) => _.pluck(path, 'id'))
 
-    [path_a, path_b] = paths
+    return json
 
-    # If the common parent is us, do a fast forward merge
-    if path_a[0] == @
-      return document
+  fromJSON: (doc) ->
 
-    # 1. Flatten each delta
-    diff_a = path_a[0].latest.diff(@latest)
-    diff_b = path_b[0].latest.diff(document.latest)
+    snapshot = new Snapshot(new Delta(doc.latest))
+    snapshot.parent_paths = _.map(doc.parents, (path) => _.map(path, (id) => { id: id }))
 
-    # 2. Transform diff_b against diff_a
-    merge_ops = diff_a.transform(diff_b, apply_first)
-
-    return new Snapshot(@latest.compose(merge_ops), [@, document])
+    return snapshot
 
 _.extend Snapshot,
   next_id: 0
+  mergeSnapshots: (a, b) ->
+
+    parent = @findCommonParent a, b
+
+    # TODO allow looking up parent by id
+
+    if not parent?
+
+      throw new Error "no-common-parent"
+
+    # If the high_priority snapshot is also the parent, just do a fast-forward
+    # merge
+    if parent.id == a.id
+      return b
+
+    # 1. Flatten each delta
+    diff_a = parent.latest.diff(a.latest)
+    diff_b = parent.latest.diff(b.latest)
+
+    # 2. Transform diff_b against diff_a
+    merge_ops = diff_a.transform(diff_b)
+
+    return new Snapshot(a.latest.compose(merge_ops), [a, b])
+
+  findCommonParent: (a, b) ->
+
+    paths = Snapshot.findShortestPathsToCommonParent(a, b)
+
+    parent = paths?[0]?[0]
+
+    return parent
+
   findShortestPathsToCommonParent: (a, b) ->
 
     # 1. Compute the parent paths of each Snapshot
-    parent_paths_a = @findParentPaths(a)
-    parent_paths_b = @findParentPaths(b)
+    parent_paths_a = a.parent_paths
+    parent_paths_b = b.parent_paths
 
     # 2. Iterate through all paths to find the first common parent
     # we iterate backwards for efficiency
