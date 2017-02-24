@@ -5,5 +5,5 @@ describe "Document.applyDelta", ->
 
     original = original.applyDelta((new Delta()).insert("hi"))
 
-    diff = (new Delta()).insert("hi").diff(original.current)
+    diff = (new Delta()).insert("hi").diff(original.latest)
     assert.equal(diff.ops.length, 0)

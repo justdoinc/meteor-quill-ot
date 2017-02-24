@@ -65,4 +65,7 @@ Package.onTest(function (api) {
   api.use('justdoinc:delta-merge-manager');
 
   api.addFiles('tests/document-applyDelta.tests.coffee');
+  api.addFiles('tests/document-findParentPaths.tests.coffee');
+  api.addFiles('tests/document-findShortestPathsToCommonParent.tests.coffee');
+  api.addFiles('tests/document-mergeDocuments.tests.coffee');
 });
