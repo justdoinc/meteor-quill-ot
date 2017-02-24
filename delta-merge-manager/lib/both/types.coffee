@@ -1,5 +1,5 @@
-Document = (delta, base) ->
-  @id = Document.next_id++
+Snapshot = (delta, base) ->
+  @id = Snapshot.next_id++
 
   if base?
     @base = base
@@ -10,17 +10,17 @@ Document = (delta, base) ->
 
   return @
 
-_.extend Document.prototype,
+_.extend Snapshot.prototype,
 
   applyDelta: (delta) ->
 
-    return new Document(@latest.compose(delta), @)
+    return new Snapshot(@latest.compose(delta), @)
 
   merge: (document, apply_first) ->
     if not apply_first?
       apply_first = false
 
-    paths = Document.findShortestPathsToCommonParent(@, document)
+    paths = Snapshot.findShortestPathsToCommonParent(@, document)
 
     if paths == null
       throw new Error "No common parent."
@@ -38,13 +38,13 @@ _.extend Document.prototype,
     # 2. Transform diff_b against diff_a
     merge_ops = diff_a.transform(diff_b, apply_first)
 
-    return new Document(@latest.compose(merge_ops), [@, document])
+    return new Snapshot(@latest.compose(merge_ops), [@, document])
 
-_.extend Document,
+_.extend Snapshot,
   next_id: 0
   findShortestPathsToCommonParent: (a, b) ->
 
-    # 1. Compute the parent paths of each Document
+    # 1. Compute the parent paths of each Snapshot
     parent_paths_a = @findParentPaths(a)
     parent_paths_b = @findParentPaths(b)
 
@@ -92,14 +92,14 @@ _.extend Document,
     if _.isArray(document.base)
 
       # [[[base1_1, base1]], [[base2_1_1, base2_1, base2], [base2_2_1, base2_2, base2]]]
-      paths = _.map(document.base, (base) => Document.findParentPaths(base))
+      paths = _.map(document.base, (base) => Snapshot.findParentPaths(base))
 
       # [[base1_1, base1]], [[base2_1_1, base2_1, base2], [base2_2_1, base2_2, base2]]
       paths = _.flatten(paths, true)
 
     else if document.base?
 
-      paths = Document.findParentPaths(document.base)
+      paths = Snapshot.findParentPaths(document.base)
 
     else
 

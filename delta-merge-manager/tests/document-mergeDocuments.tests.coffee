@@ -1,6 +1,6 @@
-describe "Document.mergeDocument", ->
+describe "Snapshot.mergeSnapshot", ->
   it "Should merge parallel branches", ->
-    original = new Document((new Delta()).insert("--|--"))
+    original = new Snapshot((new Delta()).insert("--|--"))
 
     left = original.applyDelta((new Delta()).retain(1).insert("-"))
     right = original.applyDelta((new Delta()).retain(4).insert("-"))
@@ -12,7 +12,7 @@ describe "Document.mergeDocument", ->
     assert.equal(diff.ops.length, 0)
 
   it "More complex example", ->
-    original = new Document((new Delta()).insert("This is sam\nThis is noah\n"))
+    original = new Snapshot((new Delta()).insert("This is sam\nThis is noah\n"))
 
     sam = original.applyDelta((new Delta()).retain(8).delete(1).insert("S"))
     noah = original.applyDelta((new Delta()).retain(20).delete(1).insert("N"))
@@ -28,7 +28,7 @@ describe "Document.mergeDocument", ->
     assert.equal(diff.ops.length, 0)
 
   it "Should merge overlapping edits", ->
-    original = new Document((new Delta()).insert("--|--"))
+    original = new Snapshot((new Delta()).insert("--|--"))
 
     left = original.applyDelta((new Delta()).delete(2))
     right = original.applyDelta((new Delta()).retain(1).delete(2))
@@ -41,7 +41,7 @@ describe "Document.mergeDocument", ->
 
   # This test case doesn't pass, nor can it, as far as I can tell:
   # it "Should merge conflicts as well as possible", ->
-  #   original = new Document((new Delta()).insert("--|--"))
+  #   original = new Snapshot((new Delta()).insert("--|--"))
   #
   #   left = original.applyDelta((new Delta()).delete(2).insert('__'))
   #   right = original.applyDelta((new Delta()).delete(2).insert('||'))
@@ -53,7 +53,7 @@ describe "Document.mergeDocument", ->
   #   assert.equal(diff.ops.length, 0)
 
   it "Should eventually become consistent", ->
-    original = new Document((new Delta()).insert("--|--"))
+    original = new Snapshot((new Delta()).insert("--|--"))
 
     left = original.applyDelta((new Delta()).delete(2).insert('__'))
     right = original.applyDelta((new Delta()).delete(2).insert('||'))
@@ -71,7 +71,7 @@ describe "Document.mergeDocument", ->
     assert.equal(diff.ops.length, 0)
 
   it "Should support giving the merged in changes priority", ->
-    original = new Document((new Delta()).insert("--|--"))
+    original = new Snapshot((new Delta()).insert("--|--"))
 
     left = original.applyDelta((new Delta()).delete(2).insert('__'))
     right = original.applyDelta((new Delta()).delete(2).insert('||'))

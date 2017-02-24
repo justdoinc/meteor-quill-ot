@@ -55,7 +55,7 @@ Package.onUse(function (api) {
   // // file.
 
   api.export("DeltaMergeManager", both);
-  api.export("Document", both);
+  api.export("Snapshot", both);
 });
 
 Package.onTest(function (api) {

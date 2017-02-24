@@ -1,7 +1,7 @@
-describe "Document.applyDelta", ->
+describe "Snapshot.applyDelta", ->
 
   it "Should apply a plain delta", ->
-    original = new Document(new Delta())
+    original = new Snapshot(new Delta())
 
     original = original.applyDelta((new Delta()).insert("hi"))
 
