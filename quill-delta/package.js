@@ -18,6 +18,8 @@ Package.onUse(function(api) {
   api.versionsFrom('1.4.3.1');
   api.use('ecmascript');
   api.mainModule('delta.js');
+
+  api.export('Delta');
 });
 
 Package.onTest(function(api) {

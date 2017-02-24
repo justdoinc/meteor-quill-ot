@@ -4,4 +4,4 @@
 // applications. See delta-tests.js for an example of importing.
 import Delta from 'quill-delta';
 
-export default Delta;
+export { Delta };
