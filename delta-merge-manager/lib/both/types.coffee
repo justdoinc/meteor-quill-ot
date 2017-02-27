@@ -1,5 +1,5 @@
 Snapshot = (delta, base) ->
-  @id = Snapshot.next_id++
+  @_id = Random.id()
 
   if base?
     @base = base
@@ -26,22 +26,15 @@ _.extend Snapshot.prototype,
   toJSON: () ->
 
     json =
-      id: @id
+      _id: @_id
       latest: @latest
-      parents: _.map(@parent_paths, (path) => _.pluck(path, 'id'))
+      parents: _.map(@parent_paths, (path) => _.pluck(path, '_id'))
 
     return json
 
-  fromJSON: (doc) ->
-
-    snapshot = new Snapshot(new Delta(doc.latest))
-    snapshot.parent_paths = _.map(doc.parents, (path) => _.map(path, (id) => { id: id }))
-
-    return snapshot
-
 _.extend Snapshot,
   next_id: 0
-  mergeSnapshots: (a, b) ->
+  mergeSnapshots: (a, b, resolveParent) ->
 
     parent = @findCommonParent a, b
 
@@ -51,9 +44,13 @@ _.extend Snapshot,
 
       throw new Error "no-common-parent"
 
+    if not parent.latest
+
+      parent = resolveParent(parent._id)
+
     # If the high_priority snapshot is also the parent, just do a fast-forward
     # merge
-    if parent.id == a.id
+    if parent._id == a._id
       return b
 
     # 1. Flatten each delta
@@ -109,7 +106,7 @@ _.extend Snapshot,
         if path_a.length > index
           for path_b in parent_paths_b
             if path_b.length > index
-              if path_a[index].id == path_b[index].id
+              if path_a[index]._id == path_b[index]._id
                 # Found common parent
                 return [path_a.slice(index), path_b.slice(index)]
 
@@ -137,3 +134,11 @@ _.extend Snapshot,
       paths = [[]]
 
     return _.map(paths, (base_path) => base_path.concat(path))
+
+  fromJSON: (doc) ->
+
+    snapshot = new Snapshot(new Delta(doc.latest))
+    snapshot._id = doc._id
+    snapshot.parent_paths = _.map(doc.parents, (path) => _.map(path, (id) => { _id: id }))
+
+    return snapshot

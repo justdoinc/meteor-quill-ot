@@ -14,6 +14,7 @@ Package.onUse(function (api) {
 
   api.use("coffeescript", both);
   api.use("underscore", both);
+  api.use("random", both);
 
   api.use("raix:eventemitter@0.1.1", both);
   api.use("meteorspark:util@0.2.0", both);
@@ -59,13 +60,22 @@ Package.onUse(function (api) {
 });
 
 Package.onTest(function (api) {
+  // Meteor packages
+  api.use('meteor');
   api.use('coffeescript');
+  api.use('mongo');
+
+  // The tests
   api.use('practicalmeteor:mocha');
   api.use('practicalmeteor:chai');
+
+  // The package
   api.use('justdoinc:delta-merge-manager');
 
   api.addFiles('tests/document-applyDelta.tests.coffee');
   api.addFiles('tests/document-findParentPaths.tests.coffee');
   api.addFiles('tests/document-findShortestPathsToCommonParent.tests.coffee');
   api.addFiles('tests/document-mergeDocuments.tests.coffee');
+
+  api.addFiles('tests/api.tests.coffee');
 });
