@@ -27,7 +27,7 @@ Package.onUse(function (api) {
   api.use("reactive-var", both);
   api.use("tracker", client);
 
-  api.addFiles("lib/both/types.coffee", both);
+  api.addFiles("lib/both/snapshot.coffee", both);
 
   api.addFiles("lib/both/init.coffee", both);
   api.addFiles("lib/both/errors-types.coffee", both);
@@ -56,7 +56,7 @@ Package.onUse(function (api) {
   // // file.
 
   api.export("DeltaMergeManager", both);
-  api.export("Snapshot", both);
+  api.export("SnapshotManager", both);
 });
 
 Package.onTest(function (api) {
@@ -72,10 +72,6 @@ Package.onTest(function (api) {
   // The package
   api.use('justdoinc:delta-merge-manager');
 
-  api.addFiles('tests/document-applyDelta.tests.coffee');
-  api.addFiles('tests/document-findParentPaths.tests.coffee');
-  api.addFiles('tests/document-findShortestPathsToCommonParent.tests.coffee');
-  api.addFiles('tests/document-mergeDocuments.tests.coffee');
+  api.addFiles('tests/snapshotManager.tests.coffee');
 
-  api.addFiles('tests/api.tests.coffee');
 });
