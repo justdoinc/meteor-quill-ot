@@ -7,10 +7,32 @@ _.extend DeltaMergeManager.prototype,
       snapshot_id: snapshot._id
     });
 
+  updateOrInsertDocument: (document_id, snapshot) ->
+    document = @documents.findOne
+      _id: document_id
+
+    if not document?
+      parent = new Snapshot(new Delta())
+      @snapshots.insert parent.toJSON()
+      @documents.insert
+        _id: document_id
+        snapshot_id: parent._id
+
+    @updateDocument(document_id, snapshot)
+
+
   updateDocument: (document_id, snapshot) ->
-    current_id = @documents.findOne({ _id: document_id })?.snapshot_id
+    document = @documents.findOne
+      _id: document_id
+
+    current_id = document.snapshot_id
 
     current = Snapshot.fromJSON(@snapshots.findOne({ _id: current_id }))
+
+    console.log("\n\n");
+    console.log(_.map(snapshot.parent_paths, (p) -> _.map(p, (pp) -> pp._id)))
+    console.log(_.map(current.parent_paths, (p) -> _.map(p, (pp) -> pp._id)))
+    console.log("\n\n");
 
     updated = Snapshot.mergeSnapshots(current, snapshot, (id) => @snapshots.findOne({ _id: id }))
 
@@ -32,8 +54,8 @@ _.extend DeltaMergeManager.prototype,
 
     snapshot = @snapshots.findOne({ _id: document.snapshot_id })
 
-    result = Snapshot.fromJSON(snapshot)
-
-    _.extend(result, document)
+    result =
+      snapshot: Snapshot.fromJSON(snapshot)
+      document: document
 
     return result

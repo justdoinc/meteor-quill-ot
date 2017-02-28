@@ -2,20 +2,23 @@ Template.quill.onRendered ->
   @editor = new Quill '#editor',
     theme: 'bubble'
 
+  @subscriber = DeltaManager.subscriber "vNHpGQwx8CatNdsx9"
 
-  @autorun (c) =>
-    doc = Documents.findOne()
+  @subscriber.onUpdate (doc) =>
     if doc?
-      newContent = new Delta doc.content
+      newContent = new Delta doc.latest
       cursor = @editor.getSelection()
       diff = @editor.getContents().diff newContent
       @editor.setContents newContent, "api"
-      newIndex = diff.transformPosition(cursor.index)
-      newLength = diff.transformPosition(cursor.index + cursor.length) - newIndex
-      @editor.setSelection newIndex, newLength
-      # c.stop()
+
+      if cursor?
+        newIndex = diff.transformPosition(cursor.index)
+        newLength = diff.transformPosition(cursor.index + cursor.length) - newIndex
+        @editor.setSelection newIndex, newLength
+
 
   # XXX throttle this so we have only 1-2 requests per second, or something reasonable.
   @editor.on 'text-change', (delta, original, source) =>
     if source == "user"
-      Meteor.call 'update', delta, original
+      # XXX check that original matches current source, otherwise fix.
+      @subscriber.update delta, original

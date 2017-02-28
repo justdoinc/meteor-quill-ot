@@ -32,35 +32,45 @@ _.extend Snapshot.prototype,
 
     return json
 
+  rebase: (new_base) ->
+
+    @base = new_base
+    @parent_paths = Snapshot.findParentPaths(@)
+
 _.extend Snapshot,
   next_id: 0
   mergeSnapshots: (a, b, resolveParent) ->
 
+
     parent = @findCommonParent a, b
 
-    # TODO allow looking up parent by id
+    if parent?
 
-    if not parent?
+      if not parent.latest
 
-      throw new Error "no-common-parent"
+        parent = resolveParent(parent._id)
 
-    if not parent.latest
+      # If the high_priority snapshot is also the parent, just do a fast-forward
+      # merge
+      if parent._id == a._id
+        return b
 
-      parent = resolveParent(parent._id)
+      # 1. Flatten each delta
+      diff_a = parent.latest.diff(a.latest)
+      diff_b = parent.latest.diff(b.latest)
 
-    # If the high_priority snapshot is also the parent, just do a fast-forward
-    # merge
-    if parent._id == a._id
-      return b
+      # 2. Transform diff_b against diff_a
+      merge_ops = diff_a.transform(diff_b)
 
-    # 1. Flatten each delta
-    diff_a = parent.latest.diff(a.latest)
-    diff_b = parent.latest.diff(b.latest)
+      return new Snapshot(a.latest.compose(merge_ops), [a, b])
 
-    # 2. Transform diff_b against diff_a
-    merge_ops = diff_a.transform(diff_b)
+    else
 
-    return new Snapshot(a.latest.compose(merge_ops), [a, b])
+      if a.latest.ops.length == 0
+
+        return new Snapshot(b.latest, a)
+
+      throw new Error "No common parent"
 
   findCommonParent: (a, b) ->
 
@@ -120,14 +130,14 @@ _.extend Snapshot,
     if _.isArray(document.base)
 
       # [[[base1_1, base1]], [[base2_1_1, base2_1, base2], [base2_2_1, base2_2, base2]]]
-      paths = _.map(document.base, (base) => Snapshot.findParentPaths(base))
+      paths = _.map(document.base, (base) => base.parent_paths || Snapshot.findParentPaths(base))
 
       # [[base1_1, base1]], [[base2_1_1, base2_1, base2], [base2_2_1, base2_2, base2]]
       paths = _.flatten(paths, true)
 
     else if document.base?
 
-      paths = Snapshot.findParentPaths(document.base)
+      paths = document.base.parent_paths || Snapshot.findParentPaths(document.base)
 
     else
 
