@@ -39,6 +39,8 @@ _.extend Connection.prototype,
 
     @toServer @base, [snapshot].concat(otherSnapshots)
 
-  content: () ->
+  content: (snapshot) ->
+    if snapshot?
+      return @snapshots.content snapshot
 
-    return @snapshots.content(@base)
+    return @snapshots.content @base

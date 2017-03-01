@@ -15,6 +15,15 @@ _.extend SnapshotManager.prototype,
     if snapshot._id? and existing = @get(snapshot._id)
       return existing
 
+    if snapshot._id == null and snapshot.content?.ops?.length == 0 and not snapshot.base_id? and not snapshot.parent_ids?
+      snapshot =
+        _id: null
+        base_id: null
+        parent_ids: null
+        content: new Delta()
+
+      return snapshot
+
     # allow passing in just a delta
     if snapshot.ops? and not snapshot.delta? and not snapshot.content?
       snapshot =

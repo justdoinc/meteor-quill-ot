@@ -8,18 +8,8 @@ _.extend DeltaMergeManager.prototype,
     @documents.upsert document_id,
       $setOnInsert:
         snapshot:
-          _id: snapshot_id
-          delta: new Delta()
-
-    if @documents.findOne
-      _id: document_id
-      "snapshot._id": snapshot_id
-
-    @snapshots.upsert
-      _id: snapshot_id
-    ,
-      $setOnInsert:
-        delta: new Delta()
+          _id: null
+          content: new Delta()
 
     document = null
 
@@ -51,7 +41,7 @@ _.extend DeltaMergeManager.prototype,
         # 2. update the document
         document_snapshot =
           _id: base._id
-          delta: connection.content(base)
+          content: connection.content(base)
 
         @documents.update document_id,
           $set:

@@ -17,7 +17,7 @@ describe "createServer", ->
     initial_doc = null
     connection = manager.createServer "document", (base) -> initial_doc = base
 
-    assert.deepEqual(initial_doc.delta, new Delta())
+    assert.deepEqual(initial_doc.content, new Delta())
 
   it "should accept changes", ->
     doc = null
