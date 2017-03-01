@@ -28,6 +28,7 @@ Package.onUse(function (api) {
   api.use("tracker", client);
 
   api.addFiles("lib/both/snapshot.coffee", both);
+  api.addFiles("lib/both/connection.coffee", both);
 
   api.addFiles("lib/both/init.coffee", both);
   api.addFiles("lib/both/errors-types.coffee", both);
@@ -57,6 +58,7 @@ Package.onUse(function (api) {
 
   api.export("DeltaMergeManager", both);
   api.export("SnapshotManager", both);
+  api.export("Connection", both);
 });
 
 Package.onTest(function (api) {
@@ -64,6 +66,7 @@ Package.onTest(function (api) {
   api.use('meteor');
   api.use('coffeescript');
   api.use('mongo');
+  api.use('underscore');
 
   // The tests
   api.use('practicalmeteor:mocha');
@@ -73,5 +76,6 @@ Package.onTest(function (api) {
   api.use('justdoinc:delta-merge-manager');
 
   api.addFiles('tests/snapshotManager.tests.coffee');
+  api.addFiles('tests/connection.tests.coffee');
 
 });
