@@ -116,3 +116,30 @@ describe "SnapshotManager", ->
       g = manager.merge(f, { delta: b, base_id: base_id })
 
       assert.deepEqual(manager.content(g), new Delta().insert("1.a\n2.b\n3.c"))
+
+    it "parallel branches should merge correctly", ->
+      base = manager.commit({ delta: new Delta().insert("|") })
+
+      a = manager.merge(base, { base_id: base._id, delta: new Delta().insert("a") })
+      b = manager.merge(a, { base_id: a._id, delta: new Delta().retain(1).insert("b") })
+
+      c = manager.merge(base, { base_id: base._id, delta: new Delta().retain(1).insert("c")})
+      d = manager.merge(c, { base_id: c._id, delta: new Delta().retain(2).insert("d")})
+
+
+      final = manager.merge(b, d)
+
+      assert.deepEqual(manager.content(final), new Delta().insert("ab|cd"))
+
+    it "parallel branches should merge correctly in odd orders", ->
+      base = manager.commit({ delta: new Delta().insert("|") })
+
+      a = manager.merge(base, { base_id: base._id, delta: new Delta().insert("a") })
+      b = manager.merge(a, { base_id: a._id, delta: new Delta().retain(1).insert("b") })
+
+      c = manager.merge(base, { base_id: base._id, delta: new Delta().retain(1).insert("c")})
+      d = manager.merge(c, { base_id: c._id, delta: new Delta().retain(2).insert("d")})
+
+      final = manager.merge(manager.merge(d, a), b)
+
+      assert.deepEqual(manager.content(final), new Delta().insert("ab|cd"))

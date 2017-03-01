@@ -65,47 +65,102 @@ _.extend SnapshotManager.prototype,
     a = @commit(a)
     b = @commit(b)
 
+    if b.base_id == a._id
+      return b
+
+    if a.base_id == b._id
+      return a
+
     parent_ids = [a._id, b._id]
     delta = @diff(a, b)
 
     return @commit({ base_id: a._id, parent_ids: parent_ids, delta: delta})
 
   diff: (a, b) ->
-    base = @base(a, b)
+    base = @parent(a, b)
+
     delta_a = @squash(a, base)
     delta_b = @squash(b, base)
 
     return delta_a.transform(delta_b, true)
 
   squash: (snapshot, base) ->
+    if base?
+      return @squash(base).diff(@squash(snapshot))
+
+    if not snapshot?
+      return @get(null).delta
+
     delta = snapshot.delta
 
-    base_id = base?._id or null
-    snapshot = @get(snapshot.base_id)
-    while snapshot? and snapshot._id != base_id
-      delta = snapshot.delta.compose(delta)
+    while snapshot.base_id?
       snapshot = @get(snapshot.base_id)
+      delta = snapshot.delta.compose(delta)
 
     return delta
 
-  base: (a, b) ->
-    a_parents = @parents(a)
-    b_parents = @parents(b)
+  parent: (a, b) ->
 
-    shared_parent_id = null
-    for parent_id, key in a_parents
-      if b_parents[key] == parent_id
-        shared_parent_id = parent_id
+    # 1. Compute the parent paths of each Snapshot
+    parent_paths_a = @parents(a)
+    parent_paths_b = @parents(b)
 
-    if shared_parent_id?
-      return @get(shared_parent_id)
+    # 2. Iterate through all paths to find the first common parent
+    # we iterate backwards for efficiency
+    indexes_a = _.map(parent_paths_a, (path) => path.length - 1);
+    indexes_b = _.map(parent_paths_a, (path) => path.length - 1);
+
+    # 2.1 Find the largest index in each set of paths
+    index_a = -1
+    for index in indexes_a
+      if index > index_a
+        index_a = index
+
+    index_b = -1
+    for index in indexes_b
+      if index > index_b
+        index_b = index
+
+    # 2.2 Find the largest index which is found in both lists
+    index = index_a
+    if index_a > index_b
+      index = index_b
+
+    while index >= 0
+
+      # Note, this algorithm assumes that all paths have a common root which is
+      # the first item in each array.
+
+      for path_a in parent_paths_a
+        if path_a.length > index
+          for path_b in parent_paths_b
+            if path_b.length > index
+              if path_a[index] == path_b[index]
+                # Found common parent
+                return @get(path_a[index])
+
+      index--
 
     return null
 
   parents: (snapshot) ->
-    parents = [snapshot._id]
+    path = [snapshot._id]
 
-    if snapshot.base_id
-      return @parents(@get(snapshot.base_id)).concat(parents)
+    if snapshot.parent_ids?
 
-    return parents
+      # [[[base1_1, base1]], [[base2_1_1, base2_1, base2], [base2_2_1, base2_2, base2]]]
+      paths = _.map snapshot.parent_ids, (base) =>
+        @parents(@get(base))
+
+      # [[base1_1, base1]], [[base2_1_1, base2_1, base2], [base2_2_1, base2_2, base2]]
+      paths = _.flatten(paths, true)
+
+    else if snapshot.base_id?
+
+      paths = @parents(@get(snapshot.base_id))
+
+    else
+
+      paths = [[null]]
+
+    return _.map(paths, (base_path) => base_path.concat(path))
