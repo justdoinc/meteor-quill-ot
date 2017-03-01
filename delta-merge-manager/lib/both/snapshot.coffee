@@ -16,9 +16,9 @@ _.extend SnapshotManager.prototype,
       return existing
 
     # allow passing in just a delta
-    if snapshot.ops? and not snapshot.delta
+    if snapshot.ops? and not snapshot.delta? and not snapshot.content?
       snapshot =
-        delta: snapshot
+        content: snapshot
 
     # Get an _id
     _id = snapshot._id || Random.id()
@@ -28,7 +28,8 @@ _.extend SnapshotManager.prototype,
       _id: _id
       base_id: snapshot.base_id
       parent_ids: snapshot.parent_ids
-      delta: new Delta(snapshot.delta)
+      content: snapshot.content and new Delta(snapshot.content)
+      delta: snapshot.delta and new Delta(snapshot.delta)
 
     # Save the snapshot
     @_commit(snapshot)
@@ -50,7 +51,8 @@ _.extend SnapshotManager.prototype,
         _id: snapshot._id
         base_id: snapshot.base_id
         parent_ids: snapshot.parent_ids
-        delta: new Delta(snapshot.delta)
+        delta: snapshot.delta and new Delta(snapshot.delta)
+        content: snapshot.content and new Delta(snapshot.content)
 
     return snapshot
 
@@ -91,14 +93,17 @@ _.extend SnapshotManager.prototype,
     if base?
       return @squash(base).diff(@squash(snapshot))
 
-    if not snapshot?
-      return @get(null).delta
+    delta = null
 
-    delta = snapshot.delta
+    while snapshot?
+      if snapshot.content?
+        delta = if delta? then snapshot.content.compose(delta) else snapshot.content
+        return delta
 
-    while snapshot.base_id?
+      if snapshot.delta?
+        delta = if delta? then snapshot.delta.compose(delta) else snapshot.delta
+
       snapshot = @get(snapshot.base_id)
-      delta = snapshot.delta.compose(delta)
 
     return delta
 

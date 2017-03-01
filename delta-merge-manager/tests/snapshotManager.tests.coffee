@@ -143,3 +143,11 @@ describe "SnapshotManager", ->
       final = manager.merge(manager.merge(d, a), b)
 
       assert.deepEqual(manager.content(final), new Delta().insert("ab|cd"))
+
+  describe "content()", ->
+
+    it "should prefer .content over .delta", ->
+
+      c = manager.commit { delta: new Delta().insert("y"), content: new Delta().insert("x") }
+
+      assert.deepEqual manager.content(c), new Delta().insert("x")

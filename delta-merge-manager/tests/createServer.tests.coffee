@@ -5,6 +5,7 @@ describe "createServer", ->
     manager = new DeltaMergeManager
       documents: new Mongo.Collection null
       snapshots: new Mongo.Collection null
+      messages_collection_name: null
 
   it "should return a connection", ->
 
