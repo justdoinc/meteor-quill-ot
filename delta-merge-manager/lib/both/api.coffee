@@ -1,61 +1,66 @@
 _.extend DeltaMergeManager.prototype,
 
-  createDocument: (snapshot) ->
-    @snapshots.insert(snapshot.toJSON())
+  createServer: (document_id, up) ->
+    if not document_id?
+      throw new Error("null-document-id")
 
-    return @documents.insert({
-      snapshot_id: snapshot._id
-    });
+    snapshot_id = Random.id()
+    @documents.upsert document_id,
+      $setOnInsert:
+        snapshot:
+          _id: snapshot_id
+          delta: new Delta()
 
-  updateOrInsertDocument: (document_id, snapshot) ->
-    document = @documents.findOne
+    if @documents.findOne
       _id: document_id
+      "snapshot._id": snapshot_id
 
-    if not document?
-      parent = new Snapshot(new Delta())
-      @snapshots.insert parent.toJSON()
-      @documents.insert
-        _id: document_id
-        snapshot_id: parent._id
-
-    @updateDocument(document_id, snapshot)
-
-
-  updateDocument: (document_id, snapshot) ->
-    document = @documents.findOne
-      _id: document_id
-
-    current_id = document.snapshot_id
-
-    current = Snapshot.fromJSON(@snapshots.findOne({ _id: current_id }))
-
-    console.log("\n\n");
-    console.log(_.map(snapshot.parent_paths, (p) -> _.map(p, (pp) -> pp._id)))
-    console.log(_.map(current.parent_paths, (p) -> _.map(p, (pp) -> pp._id)))
-    console.log("\n\n");
-
-    updated = Snapshot.mergeSnapshots(current, snapshot, (id) => @snapshots.findOne({ _id: id }))
-
-    snapshot_id = @snapshots.insert(updated.toJSON(updated))
-
-    # TODO handle case where update failed because another update succeeded first
-    @documents.update
-      snapshot_id: current_id
+    @snapshots.upsert
+      _id: snapshot_id
     ,
-      snapshot_id: updated._id
+      $setOnInsert:
+        delta: new Delta()
 
-    return @getDocument(document_id)
+    document = null
 
-  getDocument: (document_id) ->
-    document = @documents.findOne({ _id: document_id })
+    @documents.find(document_id).observeChanges
+      added: (id, doc) =>
+        document = doc
+        document._id = id
+      changed: (id, doc) =>
+        if doc.snapshot?._id?
+          # TODO: what to do if snapshot hasn't been committed yet?
+          snapshot = connection.snapshots.get(doc.snapshot._id)
+          connection.fromServer(snapshot)
+      removed: (id) =>
+        # TODO: destroy
 
-    if not document?
-      return null
+    connection = new Connection(
+      document.snapshot
+    ,
+      (base, otherSnapshots) =>
+        up(base, otherSnapshots)
+    ,
+      (base, otherSnapshots) =>
+        # 1. commit each snapshot
+        _.each [base].concat(otherSnapshots or []), (snapshot) =>
+          snapshot.document_id = document._id
+          @snapshots.upsert snapshot._id,
+           $setOnInsert: _.omit(snapshot, '_id')
 
-    snapshot = @snapshots.findOne({ _id: document.snapshot_id })
+        # 2. update the document
+        document_snapshot =
+          _id: base._id
+          delta: connection.content(base)
 
-    result =
-      snapshot: Snapshot.fromJSON(snapshot)
-      document: document
+        @documents.update document_id,
+          $set:
+            snapshot: document_snapshot
+    )
 
-    return result
+    @snapshots.find({ document_id: document_id }).observeChanges
+      added: (id, doc) =>
+        doc._id = id
+        connection.snapshots.commit(doc)
+
+    return connection

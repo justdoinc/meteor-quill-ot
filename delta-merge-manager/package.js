@@ -15,6 +15,7 @@ Package.onUse(function (api) {
   api.use("coffeescript", both);
   api.use("underscore", both);
   api.use("random", both);
+  api.use("mongo", both);
 
   api.use("raix:eventemitter@0.1.1", both);
   api.use("meteorspark:util@0.2.0", both);
@@ -77,5 +78,6 @@ Package.onTest(function (api) {
 
   api.addFiles('tests/snapshotManager.tests.coffee');
   api.addFiles('tests/connection.tests.coffee');
+  api.addFiles('tests/createServer.tests.coffee');
 
 });

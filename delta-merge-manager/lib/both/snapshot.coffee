@@ -28,7 +28,7 @@ _.extend SnapshotManager.prototype,
       _id: _id
       base_id: snapshot.base_id
       parent_ids: snapshot.parent_ids
-      delta: snapshot.delta
+      delta: new Delta(snapshot.delta)
 
     # Save the snapshot
     @_commit(snapshot)
@@ -69,6 +69,9 @@ _.extend SnapshotManager.prototype,
       return b
 
     if a.base_id == b._id
+      return a
+
+    if a._id == b._id
       return a
 
     parent_ids = [a._id, b._id]

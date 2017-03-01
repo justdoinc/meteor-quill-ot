@@ -7,6 +7,8 @@ Connection = (base, up, down) ->
 
   @toClient(@base)
 
+  return @
+
 _.extend Connection.prototype,
 
   fromServer: (snapshot, otherSnapshots) ->
