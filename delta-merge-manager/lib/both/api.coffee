@@ -15,7 +15,7 @@ _.extend DeltaMergeManager.prototype,
       @snapshots.upsert
         _id: snapshot._id
       ,
-        _.omit snapshot, "_id"
+        _.omit snapshot, "_id", "parent_paths"
 
       return SnapshotManager.prototype._commit.apply(connection.snapshots, arguments)
 

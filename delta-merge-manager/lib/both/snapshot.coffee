@@ -60,6 +60,7 @@ _.extend SnapshotManager.prototype,
         _id: snapshot._id
         base_id: snapshot.base_id
         parent_ids: snapshot.parent_ids
+        parent_paths: snapshot.parent_paths
         delta: snapshot.delta and new Delta(snapshot.delta)
         content: snapshot.content and new Delta(snapshot.content)
 
@@ -191,6 +192,9 @@ _.extend SnapshotManager.prototype,
        return not snapshot.parent_ids?.length
 
   parents: (snapshot) ->
+    if snapshot.parent_paths?
+      return snapshot.parent_paths
+
     path = [snapshot._id]
 
     if snapshot.parent_ids?
@@ -229,4 +233,9 @@ _.extend SnapshotManager.prototype,
 
       paths = [[null]]
 
-    return _.map(paths, (base_path) => base_path.concat(path))
+    snapshot.parent_paths = _.map(paths, (base_path) => base_path.concat(path))
+
+    if @_snapshots[snapshot._id]
+      @_snapshots[snapshot._id].parent_paths = snapshot.parent_paths
+
+    return snapshot.parent_paths
