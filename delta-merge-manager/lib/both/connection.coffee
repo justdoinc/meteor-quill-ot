@@ -34,6 +34,9 @@ _.extend Connection.prototype,
             if error.code == "missing-snapshots"
               @server_queue.push base
               @requestServerResync @base
+
+              return
+
             else
               throw error
 
@@ -95,6 +98,9 @@ _.extend Connection.prototype,
             if error.code == "missing-snapshots"
               @client_queue.push base
               @requestClientResync @base
+
+              return
+
             else
               throw error
         else
@@ -159,6 +165,9 @@ _.extend Connection.prototype,
       @fromClient(@client_queue.shift(), null, true)
 
   resyncClient: (base, toClient) ->
+    if not @base?
+      return
+
     toClient = toClient ? => @toClient.apply @, arguments
 
     toClient
@@ -170,6 +179,9 @@ _.extend Connection.prototype,
       @findMissingSnapshots base
 
   resyncServer: (base, toServer) ->
+    if not @base?
+      return
+
     toServer = toServer ? => @toServer.apply @, arguments
 
     toServer
@@ -205,7 +217,15 @@ _.extend Connection.prototype,
 
   findMissingSnapshots: (base) ->
 
-    own_snapshots = @snapshots.parents(@base)
+    # XXX I think this error is thrown because of a race condition, I should
+    #     probably fix that.
+    try
+      own_snapshots = @snapshots.parents(@base)
+    catch error
+      unless error.code == "missing-snapshots"
+        throw error
+
+      return [@base]
 
     other_snapshots = []
 

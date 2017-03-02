@@ -2,23 +2,27 @@ Template.quill.onRendered ->
   @editor = new Quill '#editor',
     theme: 'bubble'
 
-  connection = @connection = DeltaManager.createClient "doc", (doc) =>
+  @connection = DeltaManager.createClient "doc"
 
-    if doc?
-      console.log connection?.connection?.base?._id
+  @connection.toClient = (snapshot) =>
+    doc = @connection.content(snapshot)
 
-      cursor = @editor.getSelection()
-      diff = @editor.getContents().diff doc
-      @editor.setContents doc, "api"
+    cursor = @editor.getSelection()
+    diff = @editor.getContents().diff doc
+    @editor.setContents doc, "api"
 
-      if cursor?
-        newIndex = diff.transformPosition(cursor.index)
-        newLength = diff.transformPosition(cursor.index + cursor.length) - newIndex
-        @editor.setSelection newIndex, newLength
+    if cursor?
+      newIndex = diff.transformPosition(cursor.index)
+      newLength = diff.transformPosition(cursor.index + cursor.length) - newIndex
+      @editor.setSelection newIndex, newLength
 
   @editor.on 'text-change', (delta, original, source) =>
     if source == "user"
-      console.log connection.connection?.base?._id
+      Meteor.defer =>
+        @connection.fromClient
+          base_id: @connection.base?._id
+          delta: (@connection.content() ? new Delta()).diff(@editor.getContents())
 
-      # XXX check that original matches current source, otherwise fix.
-      @connection.fromClient delta
+  @autorun =>
+
+    @connection.start()

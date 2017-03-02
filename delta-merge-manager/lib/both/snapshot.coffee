@@ -76,6 +76,12 @@ _.extend SnapshotManager.prototype,
     a = @commit(a)
     b = @commit(b)
 
+    if b.base_id == a._id
+      return b
+
+    if a.base_id == b._id
+      return a
+
     parents_a = _.flatten @parents(a)
     parents_b = _.flatten @parents(b)
 
@@ -197,6 +203,8 @@ _.extend SnapshotManager.prototype,
           error = new Error("Missing Snapshots, can't compute parent paths.")
           error.code = "missing-snapshots"
 
+          console.log snapshot, base_id
+
           throw error
 
         @parents(base)
@@ -210,6 +218,8 @@ _.extend SnapshotManager.prototype,
       if not base?
         error = new Error("Missing Snapshots, can't compute parent paths.")
         error.code = "missing-snapshots"
+
+        console.log snapshot, snapshot.base_id
 
         throw error
 

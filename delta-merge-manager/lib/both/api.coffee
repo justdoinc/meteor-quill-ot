@@ -10,6 +10,8 @@ _.extend DeltaMergeManager.prototype,
       # XXX we can make this more efficient by throttling snapshot persistance
       # to disk, e.g. 10ms wait and then squashing snapshots
 
+      snapshot.document_id = document_id
+
       @snapshots.upsert
         _id: snapshot._id
       ,
@@ -36,6 +38,7 @@ _.extend DeltaMergeManager.prototype,
       return
 
     # connection.toClient is intentionally left blank
+    # connection.requestClientResync is intentionally left blank
 
     connection.start = =>
 
@@ -50,7 +53,7 @@ _.extend DeltaMergeManager.prototype,
 
             connection.fromServer changes.snapshot
 
-      @snapshots.find({_id: document_id}).observeChanges
+      @snapshots.find({document_id: document_id}).observeChanges
         added: (_id, doc) ->
 
           doc._id = _id
@@ -75,6 +78,10 @@ _.extend DeltaMergeManager.prototype,
       _.each server?.subscriptions, (sub) =>
 
         sub.apply this, args
+
+    server.requestClientResync = () =>
+
+      # XXX
 
     server.subscriptions = []
 
