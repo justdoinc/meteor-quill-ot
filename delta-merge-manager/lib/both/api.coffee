@@ -19,9 +19,9 @@ _.extend DeltaMergeManager.prototype,
         document._id = id
       changed: (id, doc) =>
         if doc.snapshot?._id?
-          # TODO: what to do if snapshot hasn't been committed yet?
-          snapshot = connection.snapshots.get(doc.snapshot._id)
-          connection.fromServer(snapshot)
+          connection.queue.push(doc.snapshot)
+
+          connection.dequeue()
       removed: (id) =>
         # TODO: destroy
 
@@ -32,13 +32,7 @@ _.extend DeltaMergeManager.prototype,
         up(base, otherSnapshots)
     ,
       (base, otherSnapshots) =>
-        # 1. commit each snapshot
-        _.each [base].concat(otherSnapshots or []), (snapshot) =>
-          snapshot.document_id = document._id
-          @snapshots.upsert snapshot._id,
-           $setOnInsert: _.omit(snapshot, '_id')
-
-        # 2. update the document
+        # update the document
         document_snapshot =
           _id: base._id
           content: connection.content(base)
@@ -47,11 +41,40 @@ _.extend DeltaMergeManager.prototype,
           $set:
             snapshot: document_snapshot
     )
+    connection.queue = []
+    connection.dequeue = () =>
+      temp_queue = connection.queue;
+      connection.queue = []
+
+      temp_queue = _.filter temp_queue, (snapshot) =>
+
+        # TODO: what to do if snapshot hasn't been committed yet?
+        snapshot = connection.snapshots.get(snapshot._id)
+
+        if not snapshot?
+          return true
+
+        connection.fromServer(snapshot)
+        return false
+
+      connection.queue = temp_queue.concat(connection.queue)
+
+    _commit = connection.snapshots._commit
+    connection.snapshots._commit = (snapshot) =>
+      _commit.call(connection.snapshots, snapshot)
+
+      snapshot.document_id = document_id
+
+      connection.fromServer(null, [snapshot])
+
+      @snapshots.upsert snapshot._id,
+        $setOnInsert: _.omit snapshot, "_id"
 
     @snapshots.find({ document_id: document_id }).observeChanges
       added: (id, doc) =>
         doc._id = id
-        connection.snapshots.commit(doc)
+        snapshot = connection.snapshots.commit(doc)
+        connection.dequeue()
 
     return connection
 

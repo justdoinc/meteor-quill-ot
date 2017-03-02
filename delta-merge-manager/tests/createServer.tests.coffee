@@ -44,7 +44,7 @@ describe "createServer", ->
     other_connection = manager.createServer "document", () -> return
     other_connection.fromClient({ base_id: doc._id, delta: new Delta().insert('hi') })
 
-    assert.deepEqual(doc.delta, new Delta().insert('hi'))
+    assert.deepEqual(connection.content(doc), new Delta().insert('hi'))
 
   it "complex test", ->
     doc = null

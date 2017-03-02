@@ -79,5 +79,6 @@ Package.onTest(function (api) {
   api.addFiles('tests/snapshotManager.tests.coffee');
   api.addFiles('tests/connection.tests.coffee');
   api.addFiles('tests/createServer.tests.coffee');
+  api.addFiles('tests/butcher-test.tests.coffee');
 
 });

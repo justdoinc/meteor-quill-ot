@@ -18,6 +18,9 @@ _.extend Connection.prototype,
     else
       otherSnapshots = []
 
+    if not snapshot?
+      return
+
     snapshot = @snapshots.commit snapshot
 
     # XXX if base is not parent of snapshot push new base to server
@@ -25,9 +28,19 @@ _.extend Connection.prototype,
     @old_base = @base
     @base = @snapshots.merge snapshot, @base
 
-    @toClient @base, [snapshot].concat(otherSnapshots)
+    update =
+      _id: @base._id
+      base_id: @base.base_id
+      parent_ids: @base.parent_ids
+      # XXX dynamically decide whether to send .content or .delta,
+      # .delta is more network efficient, but .content results in fewer
+      # potential issues
+      content: @content()
+
+    @toClient update, [snapshot].concat(otherSnapshots)
 
   fromClient: (snapshot, otherSnapshots) ->
+    console.log(JSON.stringify(arguments))
 
     if otherSnapshots?
       otherSnapshots = _.map otherSnapshots, (snap) => @snapshots.commit(snap)
@@ -38,7 +51,13 @@ _.extend Connection.prototype,
 
     @base = @snapshots.merge @base, snapshot
 
-    @toServer @base, [snapshot].concat(otherSnapshots)
+    update =
+      _id: @base._id
+      base_id: @base.base_id
+      parent_ids: @base.parent_ids
+      content: @content()
+
+    @toServer update, [snapshot].concat(otherSnapshots)
 
   content: (snapshot) ->
     if snapshot?

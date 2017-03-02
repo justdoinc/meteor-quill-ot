@@ -6,6 +6,4 @@ _.extend DeltaMergeManager.prototype,
 
       Meteor.publish "#{manager.messages_collection_name}/updates", (document_id) ->
 
-        console.log 'doc_id', document_id
-
         return manager.publishWithSecurity document_id, @

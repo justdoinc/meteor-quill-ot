@@ -2,9 +2,11 @@ Template.quill.onRendered ->
   @editor = new Quill '#editor',
     theme: 'bubble'
 
-  @connection = DeltaManager.createClient "doc", (doc) =>
+  connection = @connection = DeltaManager.createClient "doc", (doc) =>
 
     if doc?
+      console.log connection?.connection?.base?._id
+
       cursor = @editor.getSelection()
       diff = @editor.getContents().diff doc
       @editor.setContents doc, "api"
@@ -16,5 +18,7 @@ Template.quill.onRendered ->
 
   @editor.on 'text-change', (delta, original, source) =>
     if source == "user"
+      console.log connection.connection?.base?._id
+
       # XXX check that original matches current source, otherwise fix.
       @connection.fromClient delta

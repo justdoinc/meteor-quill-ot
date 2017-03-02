@@ -41,6 +41,18 @@ _.extend DeltaMergeManager.prototype,
 
     return server.fromClient.apply(server, message)
 
+  submitSnapshotWithSecurity: (document_id, message, user_id) ->
+
+    @_checkSecurity "update", document_id, user_id
+
+    return @submitSnapshot(document_id, message)
+
+  submitSnapshot: (document_id, snapshot) ->
+
+    server = @getOrCreateServer document_id
+
+    return server.snapshots.commit(snapshot)
+
   # NOTE: It may be preferable to run the security check in app code and use
   # the publish and update api calls directly
   _checkSecurity: (action_name, document_id, user_id) ->
