@@ -13,8 +13,8 @@ describe "Connection", ->
     server.toClient = (args...) => server_messages.push args
     client.toServer = (args...) => client_messages.push args
 
-    server.requestServerResync = () => return
-    client.requestClientResync = () => return
+    server.requestClientResync = () => return
+    client.requestServerResync = () => return
 
     server.toServer = () => return
     client.toClient = () => return

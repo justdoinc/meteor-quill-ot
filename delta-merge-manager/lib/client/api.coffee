@@ -1,51 +1,25 @@
 _.extend DeltaMergeManager.prototype,
 
-  createClient: (document_id, up) ->
+  createClient: (document_id) ->
 
     # XXX destroy
 
-    Meteor.subscribe "#{@messages_collection_name}/updates", document_id
-
     old_base = null
-    connection = null
-    api =
-      fromClient: (delta) =>
-        # Ignore changes before connection is established
-        # client shouldn't submit any changes until the 'up' callback has
-        # been called at least once.
+    connection = new Connection()
+    connection.toServer = (args...) =>
 
-        if connection?
-          connection.fromClient { base_id: connection.base._id, delta: delta }
+      Meteor.call "#{@messages_collection_name}/update", document_id, args
 
-    @messages_collection.find({ document_id: document_id }).observeChanges
-      added: (_id, doc) =>
-        if not connection?
+    connection.start = () =>
 
-          connection = new Connection(
-            doc.message[0]
-          ,
-            (base) => if connection? then up(connection.content())
-          ,
-            (args...) => Meteor.call "#{@messages_collection_name}/update", document_id, args
-          )
+      Meteor.subscribe "#{@messages_collection_name}/updates", document_id
 
-          _commit = connection.snapshots._commit
-          connection.snapshots._commit = (snapshot) =>
-            _commit.call(connection.snapshots, snapshot)
+      @messages_collection.find({ document_id: document_id }).observeChanges
+        added: (_id, doc) =>
 
-            Meteor.call "#{@messages_collection_name}/submitSnapshot", document_id, snapshot
+          connection.fromServer.apply connection, doc.message
 
-          api.connection = connection
-
-          up(connection.content())
-
-        else
-
-          connection.fromServer.apply(connection, doc.message)
-
-
-
-    return api
+    return connection
 
   destroy: ->
     if @destroyed

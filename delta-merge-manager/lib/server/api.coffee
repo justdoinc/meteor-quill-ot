@@ -21,11 +21,10 @@ _.extend DeltaMergeManager.prototype,
         document_id: document_id
         message: args
 
-    publish
-      _id: server.base._id
-      delta: server.content()
-
     server.subscriptions.push(publish)
+
+    # Send initial resync
+    server.resyncClient null, publish
 
     return publication.ready()
 

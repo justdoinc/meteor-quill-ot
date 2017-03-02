@@ -68,7 +68,8 @@ _.extend DeltaMergeManager.prototype,
 
       return @servers[document_id]
 
-    server = @createServer document_id, () =>
+    server = @createServer document_id
+    server.toClient = () =>
       args = _.toArray arguments
 
       _.each server?.subscriptions, (sub) =>
@@ -76,5 +77,7 @@ _.extend DeltaMergeManager.prototype,
         sub.apply this, args
 
     server.subscriptions = []
+
+    server.start()
 
     return (@servers[document_id] = server)

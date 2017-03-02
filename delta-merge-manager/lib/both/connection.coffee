@@ -32,7 +32,6 @@ _.extend Connection.prototype,
             # should have been sent from the server, we'll push the base
             # to a queue and request a requestServerResync
             if error.code == "missing-snapshots"
-              console.warn "missing-snapshots"
               @server_queue.push base
               @requestServerResync @base
             else
@@ -94,7 +93,6 @@ _.extend Connection.prototype,
             # should have been sent from the server, we'll push the base
             # to a queue and request a requestServerResync
             if error.code == "missing-snapshots"
-              console.warn "missing-snapshots"
               @client_queue.push base
               @requestClientResync @base
             else
@@ -160,9 +158,10 @@ _.extend Connection.prototype,
 
       @fromClient(@client_queue.shift(), null, true)
 
-  resyncClient: (base) ->
+  resyncClient: (base, toClient) ->
+    toClient = toClient ? => @toClient.apply @, arguments
 
-    @toClient
+    toClient
       _id: @base._id
       base_id: @base.base_id
       parent_ids: @base.parent_ids
@@ -170,11 +169,10 @@ _.extend Connection.prototype,
     ,
       @findMissingSnapshots base
 
-  resyncServer: (base) ->
+  resyncServer: (base, toServer) ->
+    toServer = toServer ? => @toServer.apply @, arguments
 
-    # XXX also send intermediate snapshots
-
-    @toServer
+    toServer
       _id: @base._id
       base_id: @base.base_id
       parent_ids: @base.parent_ids
@@ -208,6 +206,7 @@ _.extend Connection.prototype,
   findMissingSnapshots: (base) ->
 
     own_snapshots = @snapshots.parents(@base)
+
     other_snapshots = []
 
     # Use a try catch because we may not have all the parent snapshots for
@@ -215,16 +214,17 @@ _.extend Connection.prototype,
 
     # TODO: add ability of 'parents' to return partial results for better
     #       efficiency.
-    try
-      other_snapshots = @snapshots.parents(base)
-    catch error
-      unless error.code == "missing-snapshots"
-        throw error
+    if base?
+      try
+          other_snapshots = @snapshots.parents(base)
+      catch error
+        unless error.code == "missing-snapshots"
+          throw error
 
-      # NOTE: We silently ingore error if code == "missing-snapshots"
+        # NOTE: We silently ingore error if code == "missing-snapshots"
 
-      # Alternately we could request a resync, but we probably already did and
-      # that could create a circular reference.
+        # Alternately we could request a resync, but we probably already did and
+        # that could create a circular reference.
 
     # snapshot lists need to be flat and unique
     own_snapshots = _.flatten own_snapshots
