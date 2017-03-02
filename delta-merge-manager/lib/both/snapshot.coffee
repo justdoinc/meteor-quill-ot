@@ -68,9 +68,20 @@ _.extend SnapshotManager.prototype,
 
   content: (snapshot_or_id) ->
     if _.isString snapshot_or_id
-      snapshot_or_id = @get(snapshot_or_id)
+      snapshot = @get(snapshot_or_id)
+    else
+      snapshot = snapshot_or_id
 
-    return @squash snapshot_or_id
+
+    if snapshot.content?
+      return snapshot.content
+
+    snapshot.content = @squash snapshot
+
+    if @_snapshots[snapshot._id]
+      @_snapshots[snapshot._id].content = snapshot.content
+          
+    return snapshot.content
 
   # merge b into a and return the result
   merge: (a, b) ->
@@ -207,8 +218,6 @@ _.extend SnapshotManager.prototype,
           error = new Error("Missing Snapshots, can't compute parent paths.")
           error.code = "missing-snapshots"
 
-          console.log snapshot, base_id
-
           throw error
 
         @parents(base)
@@ -222,8 +231,6 @@ _.extend SnapshotManager.prototype,
       if not base?
         error = new Error("Missing Snapshots, can't compute parent paths.")
         error.code = "missing-snapshots"
-
-        console.log snapshot, snapshot.base_id
 
         throw error
 

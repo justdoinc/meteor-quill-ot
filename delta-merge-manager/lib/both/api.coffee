@@ -20,6 +20,8 @@ _.extend DeltaMergeManager.prototype,
       return SnapshotManager.prototype._commit.apply(connection.snapshots, arguments)
 
     connection.toServer = (base) =>
+      if not base?
+        return
 
       @documents.upsert
         _id: document_id

@@ -52,7 +52,7 @@ describe "createServer", ->
     other_connection.toClient = () => return
     other_connection.requestClientResync = () => return
     other_connection.start()
-    
+
     other_connection.fromClient({ base_id: null, delta: new Delta().insert('hi') })
     other_connection.fromClient({ base_id: other_connection.base._id, delta: new Delta().retain(2).insert(' sam') })
 
@@ -60,3 +60,12 @@ describe "createServer", ->
 
     assert.deepEqual(other_connection.content(), new Delta().insert('hello joe\nhi sam'))
     assert.deepEqual(connection.content(), new Delta().insert('hello joe\nhi sam'))
+
+  for i in [0..100]
+    it "preformance test #{i}", ->
+
+      for ii in [0..100]
+
+        connection.fromClient({ base_id: connection.base?._id, delta: new Delta().insert("-") })
+
+      assert.deepEqual(connection.content(), new Delta().insert([0..100].map(() => "-").join("")))

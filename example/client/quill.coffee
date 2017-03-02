@@ -23,6 +23,7 @@ Template.quill.onRendered ->
           base_id: @connection.base?._id
           delta: (@connection.content() ? new Delta()).diff(@editor.getContents())
 
+
   @autorun =>
 
     @connection.start()
