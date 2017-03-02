@@ -1,5 +1,6 @@
 describe "createServer", ->
   manager = null
+  connection = null
 
   beforeEach ->
     manager = new DeltaMergeManager
@@ -7,53 +8,41 @@ describe "createServer", ->
       snapshots: new Mongo.Collection null
       messages_collection_name: null
 
-  it "should return a connection", ->
+    connection = manager.createServer "document"
 
-    connection = manager.createServer "document", () -> return
+  it "should return a connection", ->
 
     assert.instanceOf(connection, Connection)
 
-  it "should publish an initial snapshot (empty delta for non-existant documents)", ->
-    initial_doc = null
-    connection = manager.createServer "document", (base) -> initial_doc = base
-
-    assert.deepEqual(initial_doc.content, new Delta())
-
   it "should accept changes", ->
-    doc = null
-    connection = manager.createServer "document", (base) -> doc = base
 
-    connection.fromClient({ base_id: doc._id, delta: new Delta().insert('hi') })
+    connection.fromClient({ base_id: null, delta: new Delta().insert('hi') })
 
     assert.deepEqual(connection.content(), new Delta().insert('hi'))
 
   it "should persist changes", ->
-    doc = null
-    connection = manager.createServer "document", (base) -> doc = base
 
-    connection.fromClient({ base_id: doc._id, delta: new Delta().insert('hi') })
+    connection.fromClient({ base_id: null, delta: new Delta().insert('hi') })
 
-    connection = manager.createServer "document", (base) -> doc = base
+    # Re-create the server
+    connection = manager.createServer "document"
 
     assert.deepEqual(connection.content(), new Delta().insert('hi'))
 
   it "should handle changes from other servers", ->
-    doc = null
-    connection = manager.createServer "document", (base) -> doc = base
 
-    other_connection = manager.createServer "document", () -> return
-    other_connection.fromClient({ base_id: doc._id, delta: new Delta().insert('hi') })
+    other_connection = manager.createServer "document"
+    other_connection.fromClient({ base_id: null, delta: new Delta().insert('hi') })
 
-    assert.deepEqual(connection.content(doc), new Delta().insert('hi'))
+    assert.deepEqual(connection.content(), new Delta().insert('hi'))
 
   it "complex test", ->
-    doc = null
-    connection = manager.createServer "document", (base) -> doc = base
 
-    other_connection = manager.createServer "document", () -> return
-    other_connection.fromClient({ base_id: doc._id, delta: new Delta().insert('hi') })
+    other_connection = manager.createServer "document"
+    other_connection.fromClient({ base_id: null, delta: new Delta().insert('hi') })
     other_connection.fromClient({ base_id: other_connection.base._id, delta: new Delta().retain(2).insert(' sam') })
 
-    connection.fromClient({ base_id: doc._id, delta: new Delta().insert('hello joe\n') })
+    connection.fromClient({ base_id: connection.base._id, delta: new Delta().insert('hello joe\n') })
 
+    assert.deepEqual(other_connection.content(), new Delta().insert('hello joe\nhi sam'))
     assert.deepEqual(connection.content(), new Delta().insert('hello joe\nhi sam'))

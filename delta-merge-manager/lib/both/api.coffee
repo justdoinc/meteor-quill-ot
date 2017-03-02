@@ -1,80 +1,52 @@
 _.extend DeltaMergeManager.prototype,
 
-  createServer: (document_id, up) ->
+  createServer: (document_id) ->
     if not document_id?
       throw new Error("null-document-id")
 
-    snapshot_id = Random.id()
-    @documents.upsert document_id,
-      $setOnInsert:
-        snapshot:
-          _id: null
-          content: new Delta()
-
-    document = null
-
-    @documents.find(document_id).observeChanges
-      added: (id, doc) =>
-        document = doc
-        document._id = id
-      changed: (id, doc) =>
-        if doc.snapshot?._id?
-          connection.queue.push(doc.snapshot)
-
-          connection.dequeue()
-      removed: (id) =>
-        # TODO: destroy
-
-    connection = new Connection(
-      document.snapshot
-    ,
-      (base, otherSnapshots) =>
-        up(base, otherSnapshots)
-    ,
-      (base, otherSnapshots) =>
-        # update the document
-        document_snapshot =
-          _id: base._id
-          content: connection.content(base)
-
-        @documents.update document_id,
-          $set:
-            snapshot: document_snapshot
-    )
-    connection.queue = []
-    connection.dequeue = () =>
-      temp_queue = connection.queue;
-      connection.queue = []
-
-      temp_queue = _.filter temp_queue, (snapshot) =>
-
-        # TODO: what to do if snapshot hasn't been committed yet?
-        snapshot = connection.snapshots.get(snapshot._id)
-
-        if not snapshot?
-          return true
-
-        connection.fromServer(snapshot)
-        return false
-
-      connection.queue = temp_queue.concat(connection.queue)
-
-    _commit = connection.snapshots._commit
+    connection = new Connection()
     connection.snapshots._commit = (snapshot) =>
-      _commit.call(connection.snapshots, snapshot)
 
-      snapshot.document_id = document_id
+      # XXX we can make this more efficient by throttling snapshot persistance
+      # to disk, e.g. 10ms wait and then squashing snapshots
 
-      connection.fromServer(null, [snapshot])
+      @snapshots.upsert
+        _id: snapshot._id
+      ,
+        _.omit snapshot, "_id"
 
-      @snapshots.upsert snapshot._id,
-        $setOnInsert: _.omit snapshot, "_id"
+      return SnapshotManager.prototype._commit.apply(connection.snapshots, arguments)
 
-    @snapshots.find({ document_id: document_id }).observeChanges
-      added: (id, doc) =>
-        doc._id = id
-        snapshot = connection.snapshots.commit(doc)
-        connection.dequeue()
+    connection.toServer = (base) =>
+
+      @documents.upsert
+        _id: document_id
+      ,
+        $set:
+          snapshot:
+            _id: base._id
+            base_id: base.base_id
+            parent_ids: base.parent_ids
+            content: connection.content(base)
+
+    connection.requestServerResync = (base) =>
+
+      # TODO
+
+      return
+
+    # connection.toClient is intentionally left blank
+
+    @documents.find({_id: document_id}).observeChanges
+      added: (_id, doc) ->
+
+        connection.fromServer doc.snapshot
+
+      changed: (_id, changes) ->
+
+        if changes.snapshot?._id
+
+          connection.fromServer changes.snapshot
 
     return connection
 
