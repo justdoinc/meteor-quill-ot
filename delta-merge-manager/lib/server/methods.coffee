@@ -12,4 +12,10 @@ _.extend DeltaMergeManager.prototype,
 
           return manager.submitSnapshotWithSecurity document_id, message, @userId
 
+        "#{manager.messages_collection_name}/requestResync": (document_id, message) =>
+
+          return manager.requestResyncWithSecurity document_id, message, @userId
+
+
+
     return

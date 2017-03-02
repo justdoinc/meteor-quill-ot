@@ -10,6 +10,15 @@ _.extend DeltaMergeManager.prototype,
 
       Meteor.call "#{@messages_collection_name}/update", document_id, args
 
+    connection.requestServerResync = (base) =>
+
+      Meteor.call "#{@messages_collection_name}/requestResync", document_id, base, (error, result) =>
+
+        if error
+          console.warn error
+        else
+          connection.fromServer.apply connection, result
+
     connection.start = () =>
 
       Meteor.subscribe "#{@messages_collection_name}/updates", document_id

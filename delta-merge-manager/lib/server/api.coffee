@@ -28,6 +28,21 @@ _.extend DeltaMergeManager.prototype,
 
     return publication.ready()
 
+  requestResyncWithSecurity: (document_id, message, user_id) ->
+
+    @_checkSecurity "publish", document_id, user_id
+
+    return @requestResync(document_id, message)
+
+  requestResync: (document_id, message) ->
+
+    server = @getOrCreateServer document_id
+
+    message = null
+    server.resyncClient(message, (args...) => message = args)
+
+    return message
+
   updateWithSecurity: (document_id, message, user_id) ->
 
     @_checkSecurity "update", document_id, user_id
