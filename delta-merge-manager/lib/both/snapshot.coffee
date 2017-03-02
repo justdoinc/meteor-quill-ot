@@ -76,16 +76,28 @@ _.extend SnapshotManager.prototype,
     a = @commit(a)
     b = @commit(b)
 
-    if b.base_id == a._id
+    parents_a = _.flatten @parents(a)
+    parents_b = _.flatten @parents(b)
+
+    # Check if b is a parent of a
+    if _.contains parents_a, b._id
+      return a
+
+    # Check if a is a parent of b
+    if _.contains parents_b, a._id
       return b
 
-    if a.base_id == b._id
-      return a
-
-    if a._id == b._id
-      return a
-
     parent_ids = [a._id, b._id]
+
+    commits_a = @commits(parents_a)
+    commits_b = @commits(parents_b)
+
+    if _.difference(commits_b, commits_a).length == 0
+      return @commit({ base_id: a._id, parent_ids: parent_ids, delta: new Delta() })
+
+    if _.difference(commits_a, commits_b).length == 0
+      return @commit({ base_id: b._id, parent_ids: parent_ids, delta: new Delta() })
+
     delta = @diff(a, b)
 
     return @commit({ base_id: a._id, parent_ids: parent_ids, delta: delta})
@@ -160,19 +172,46 @@ _.extend SnapshotManager.prototype,
 
     return null
 
+  # Filters snapshots to return only snapshots which were not merges
+  commits: (snapshot_ids) ->
+
+     snapshot_ids = _.flatten snapshot_ids
+     snapshot_ids = _.uniq snapshot_ids
+
+     return _.filter snapshot_ids, (snapshot_id) =>
+
+       snapshot = @get snapshot_id
+
+       return not snapshot.parent_ids?.length
+
   parents: (snapshot) ->
     path = [snapshot._id]
 
     if snapshot.parent_ids?
 
       # [[[base1_1, base1]], [[base2_1_1, base2_1, base2], [base2_2_1, base2_2, base2]]]
-      paths = _.map snapshot.parent_ids, (base) =>
-        @parents(@get(base))
+      paths = _.map snapshot.parent_ids, (base_id) =>
+        base = @get(base_id)
+
+        if not base?
+          error = new Error("Missing Snapshots, can't compute parent paths.")
+          error.code = "missing-snapshots"
+
+          throw error
+
+        @parents(base)
 
       # [[base1_1, base1]], [[base2_1_1, base2_1, base2], [base2_2_1, base2_2, base2]]
       paths = _.flatten(paths, true)
 
     else if snapshot.base_id?
+      base = @get(snapshot.base_id)
+
+      if not base?
+        error = new Error("Missing Snapshots, can't compute parent paths.")
+        error.code = "missing-snapshots"
+
+        throw error
 
       paths = @parents(@get(snapshot.base_id))
 

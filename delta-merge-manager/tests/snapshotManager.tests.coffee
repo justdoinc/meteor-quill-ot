@@ -144,6 +144,73 @@ describe "SnapshotManager", ->
 
       assert.deepEqual(manager.content(final), new Delta().insert("ab|cd"))
 
+    it "should not update a delta when merging in the base", ->
+      base = manager.commit({ delta: new Delta().insert("|") })
+
+      a = manager.merge(base, { base_id: base._id, delta: new Delta().insert("a") })
+      b = manager.merge(a, { base_id: a._id, delta: new Delta().retain(1).insert("b") })
+
+      c = manager.merge(b, a)
+      d = manager.merge(c, a)
+
+      assert.deepEqual(manager.content(b), manager.content(c))
+
+    it "should not update a delta when merging in a parent", ->
+      base = manager.commit({ delta: new Delta().insert("|") })
+
+      a = manager.merge(base, { base_id: base._id, delta: new Delta().insert("a") })
+      b = manager.merge(a, { base_id: a._id, delta: new Delta().retain(1).insert("b") })
+
+      c = manager.merge(b, { base_id: a._id, delta: new Delta().retain(2).insert("c") })
+      d = manager.merge(c, a)
+
+      assert.deepEqual(manager.content(c), manager.content(d))
+
+    it "repeat merging of snapshots from parallel branches should not create duplicate content", ->
+      base = manager.commit({ delta: new Delta().insert("|") })
+
+      # Fake client
+      a = manager.merge(base, { base_id: base._id, delta: new Delta().insert("a") })
+      b = manager.merge(a, { base_id: a._id, delta: new Delta().retain(1).insert("b") })
+
+      # Fake server
+      c = manager.merge(base, { base_id: base._id, delta: new Delta().retain(1).insert("c")})
+      d = manager.merge(c, { base_id: c._id, delta: new Delta().retain(2).insert("d")})
+
+      # Merge server into client
+      e = manager.merge(c, b)
+      f = manager.merge(d, e)
+
+      # Merge original client snaps into server
+      g = manager.merge(d, a)
+      h = manager.merge(g, b)
+
+      # Merge subsequent client snaps into server
+      i = manager.merge(h, e)
+      j = manager.merge(i, f)
+
+
+      # check all snaps are full merges (descend from all of a, b, c, d)
+      # and check that they match (the first full merge)
+      _.each [h, i, j], (snap) =>
+
+        assert.deepEqual(manager.content(f), manager.content(snap))
+
+    it "throws a readable error when attempting to merge snapshots with missing intermediate snapshots", ->
+      base = manager.commit({ delta: new Delta().insert("|") })
+
+      # Broken merge
+      try
+
+        manager.merge(base, { delta: new Delta().insert("a"), base_id: "xyz" })
+
+        assert.fail()
+
+      catch error
+
+        assert.match error.message, /missing snapshots/i
+        assert.equal error.code, "missing-snapshots"
+
   describe "content()", ->
 
     it "should prefer .content over .delta", ->
