@@ -9,6 +9,9 @@ describe "createServer", ->
       messages_collection_name: null
 
     connection = manager.createServer "document"
+    connection.toClient = () => return
+    connection.requestClientResync = () => return
+    connection.start()
 
   it "should return a connection", ->
 
@@ -26,12 +29,19 @@ describe "createServer", ->
 
     # Re-create the server
     connection = manager.createServer "document"
+    connection.toClient = () => return
+    connection.requestClientResync = () => return
+    connection.start()
 
     assert.deepEqual(connection.content(), new Delta().insert('hi'))
 
   it "should handle changes from other servers", ->
 
     other_connection = manager.createServer "document"
+    other_connection.toClient = () => return
+    other_connection.requestClientResync = () => return
+    other_connection.start()
+
     other_connection.fromClient({ base_id: null, delta: new Delta().insert('hi') })
 
     assert.deepEqual(connection.content(), new Delta().insert('hi'))
@@ -39,6 +49,10 @@ describe "createServer", ->
   it "complex test", ->
 
     other_connection = manager.createServer "document"
+    other_connection.toClient = () => return
+    other_connection.requestClientResync = () => return
+    other_connection.start()
+    
     other_connection.fromClient({ base_id: null, delta: new Delta().insert('hi') })
     other_connection.fromClient({ base_id: other_connection.base._id, delta: new Delta().retain(2).insert(' sam') })
 

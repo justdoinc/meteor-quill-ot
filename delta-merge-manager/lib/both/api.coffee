@@ -37,16 +37,25 @@ _.extend DeltaMergeManager.prototype,
 
     # connection.toClient is intentionally left blank
 
-    @documents.find({_id: document_id}).observeChanges
-      added: (_id, doc) ->
+    connection.start = =>
 
-        connection.fromServer doc.snapshot
+      @documents.find({_id: document_id}).observeChanges
+        added: (_id, doc) ->
 
-      changed: (_id, changes) ->
+          connection.fromServer doc.snapshot
 
-        if changes.snapshot?._id
+        changed: (_id, changes) ->
 
-          connection.fromServer changes.snapshot
+          if changes.snapshot?._id
+
+            connection.fromServer changes.snapshot
+
+      @snapshots.find({_id: document_id}).observeChanges
+        added: (_id, doc) ->
+
+          doc._id = _id
+
+          connection.fromServer null, [doc]
 
     return connection
 
