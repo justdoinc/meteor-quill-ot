@@ -203,8 +203,6 @@ _.extend SnapshotManager.prototype,
           error = new Error("Missing Snapshots, can't compute parent paths.")
           error.code = "missing-snapshots"
 
-          console.log snapshot, base_id
-
           throw error
 
         @parents(base)
@@ -218,8 +216,6 @@ _.extend SnapshotManager.prototype,
       if not base?
         error = new Error("Missing Snapshots, can't compute parent paths.")
         error.code = "missing-snapshots"
-
-        console.log snapshot, snapshot.base_id
 
         throw error
 
