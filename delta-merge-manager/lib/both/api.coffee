@@ -54,3 +54,23 @@ _.extend DeltaMergeManager.prototype,
         connection.snapshots.commit(doc)
 
     return connection
+
+  getOrCreateServer: (document_id) ->
+    if not @servers?
+
+      @servers = {}
+
+    if @servers[document_id]?
+
+      return @servers[document_id]
+
+    server = @createServer document_id, () =>
+      args = _.toArray arguments
+
+      _.each server?.subscriptions, (sub) =>
+
+        sub.apply this, args
+
+    server.subscriptions = []
+
+    return (@servers[document_id] = server)

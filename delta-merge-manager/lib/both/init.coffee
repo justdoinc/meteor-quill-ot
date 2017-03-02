@@ -1,4 +1,5 @@
-default_options = {}
+default_options =
+  messages_collection_name: "delta-merge-manager-messages"
 
 options_schema = null
 
@@ -142,6 +143,11 @@ _.extend DeltaMergeManager.prototype,
 
     @snapshots = @options.snapshots
     @documents = @options.documents
+
+    # Only initialize messages_collection if name has been specified
+    if @options.messages_collection_name?
+      @messages_collection_name = @options.messages_collection_name
+      @messages_collection = new Mongo.Collection @messages_collection_name
 
     return
 

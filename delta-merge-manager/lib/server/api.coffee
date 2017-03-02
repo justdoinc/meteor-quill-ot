@@ -1,3 +1,6 @@
+
+
+
 _.extend DeltaMergeManager.prototype,
 
   publishWithSecurity: (document_id, publication) ->
@@ -7,36 +10,36 @@ _.extend DeltaMergeManager.prototype,
     return @publish(document_id, publication)
 
   publish: (document_id, publication) ->
-    # NOTE: This function does NOT check security, it should be called from
-    # publishWithSecurity if you want security checks done.
+    if not @messages_collection_name
+      throw new Error "no-messages-collection"
 
-    # NOTE: this collection is explicitly not supposed to be identical to the
-    # @documents collection, but, the documents in this collection should look
-    # exactly like the documents returned by @getDocument
-    @documents.find({ _id: document_id }).observeChanges
-      added: =>
-        doc = @documents.findOne(document_id)
-        snapshot = @snapshots.findOne(doc.snapshot_id)
-        publication.added "__delta_merge_manager_documents__", document_id, { document: doc, snapshot: snapshot }
-      changed: =>
-        console.log('changed')
-        doc = @documents.findOne(document_id)
-        snapshot = @snapshots.findOne(doc.snapshot_id)
-        publication.changed "__delta_merge_manager_documents__", document_id, { document: doc, snapshot: snapshot }
-      removed: =>
-        publication.remove "__delta_merge_manager_documents__", document_id
+    server = @getOrCreateServer document_id
 
-    # TODO: publication of cursors
+    publish = (args...) =>
+
+      publication.added @messages_collection_name, Random.id(),
+        document_id: document_id
+        message: args
+
+    publish
+      _id: server.base._id
+      delta: server.content()
+
+    server.subscriptions.push(publish)
 
     return publication.ready()
 
-  updateWithSecurity: (document_id, updated_snapshot, user_id) ->
+  updateWithSecurity: (document_id, message, user_id) ->
 
     @_checkSecurity "update", document_id, user_id
 
-    # TODO: record the user on each snapshot
+    return @update(document_id, message)
 
-    return @updateOrInsertDocument document_id, updated_snapshot
+  update: (document_id, message) ->
+
+    server = @getOrCreateServer document_id
+
+    return server.fromClient.apply(server, message)
 
   # NOTE: It may be preferable to run the security check in app code and use
   # the publish and update api calls directly

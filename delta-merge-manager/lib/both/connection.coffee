@@ -22,6 +22,7 @@ _.extend Connection.prototype,
 
     # XXX if base is not parent of snapshot push new base to server
 
+    @old_base = @base
     @base = @snapshots.merge snapshot, @base
 
     @toClient @base, [snapshot].concat(otherSnapshots)
@@ -44,3 +45,9 @@ _.extend Connection.prototype,
       return @snapshots.content snapshot
 
     return @snapshots.content @base
+
+  delta: (snapshot) ->
+    if not snapshot?
+      snapshot = @base
+
+    return @snapshots.squash snapshot, @old_base

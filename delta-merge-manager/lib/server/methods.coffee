@@ -2,9 +2,10 @@ _.extend DeltaMergeManager.prototype,
   _setupMethods: ->
     manager = @
 
-    Meteor.methods
-      "delta-merge-manager_update": (document_id, updated_snapshot) =>
+    if manager.messages_collection_name?
+      Meteor.methods
+        "#{manager.messages_collection_name}/submit": (document_id, message) =>
 
-        return manager.updateWithSecurity(document_id, Snapshot.fromJSON(updated_snapshot), @)
+          return manager.updateWithSecurity document_id, message, @userId
 
     return
