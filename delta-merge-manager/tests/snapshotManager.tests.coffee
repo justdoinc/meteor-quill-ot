@@ -169,11 +169,11 @@ describe "SnapshotManager", ->
     it "repeat merging of snapshots from parallel branches should not create duplicate content", ->
       base = manager.commit({ delta: new Delta().insert("|") })
 
-      # Fake client
+      # client
       a = manager.merge(base, { base_id: base._id, delta: new Delta().insert("a") })
       b = manager.merge(a, { base_id: a._id, delta: new Delta().retain(1).insert("b") })
 
-      # Fake server
+      # server
       c = manager.merge(base, { base_id: base._id, delta: new Delta().retain(1).insert("c")})
       d = manager.merge(c, { base_id: c._id, delta: new Delta().retain(2).insert("d")})
 
@@ -195,6 +195,11 @@ describe "SnapshotManager", ->
       _.each [h, i, j], (snap) =>
 
         assert.deepEqual(manager.content(f), manager.content(snap))
+
+      # Check that no new snapshots were created after snapshot h (first server snapshot with all merged commits)
+      _.each [i, j], (snap) =>
+
+        assert.equal snap._id, h._id
 
     it "throws a readable error when attempting to merge snapshots with missing intermediate snapshots", ->
       base = manager.commit({ delta: new Delta().insert("|") })

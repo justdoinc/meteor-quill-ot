@@ -99,10 +99,10 @@ _.extend SnapshotManager.prototype,
     commits_b = @commits(parents_b)
 
     if _.difference(commits_b, commits_a).length == 0
-      return @commit({ base_id: a._id, parent_ids: parent_ids, delta: new Delta() })
+      return a
 
     if _.difference(commits_a, commits_b).length == 0
-      return @commit({ base_id: b._id, parent_ids: parent_ids, delta: new Delta() })
+      return b
 
     delta = @diff(a, b)
 

@@ -63,6 +63,32 @@ describe "Connection", ->
 
     assert.deepEqual(client.content(), server.content())
 
+  it "should sync client and server after mirror merges", ->
+
+    # a
+    server.fromServer({ base_id: server.base._id, delta: new Delta().insert('1') })
+    # b
+    client.fromClient({ base_id: client.base._id, delta: new Delta().insert('1') })
+    # b => server
+    server.fromClient.apply(server, client_messages.shift())
+    # a => client
+    client.fromServer.apply(client, server_messages.shift())
+    # a + b => client
+    client.fromServer.apply(client, server_messages.shift())
+    # c
+    client.fromClient({ base_id: client.base._id, delta: new Delta().insert('1') })
+    # a + b => server
+    server.fromClient.apply(server, client_messages.shift())
+    # a + b + c => server
+    server.fromClient.apply(server, client_messages.shift())
+    # a + b + c => client
+    client.fromServer.apply(client, server_messages.shift())
+
+    assert.deepEqual(client.content(), server.content())
+
+    assert.equal client_messages.length, 0
+    assert.equal server_messages.length, 0
+
   it "should handle out of order messages", ->
 
     server.fromServer({ base_id: server.base._id, delta: new Delta().insert('1') })

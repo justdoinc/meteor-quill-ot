@@ -12,6 +12,7 @@ _.extend Connection.prototype,
   fromServer: (base, snapshots, is_retry) ->
 
     queue = @beginCaptureSnapshots()
+    old_base = @base
 
     try
       if snapshots?
@@ -63,7 +64,7 @@ _.extend Connection.prototype,
 
     # We send the updated base to the server if this was not a fast-forward
     # merge
-    to_server_base = if base? and base._id != @base._id then @base else null
+    to_server_base = if base? and base._id != @base._id and old_base?._id != @base._id then @base else null
 
     if to_server_base? or to_server_snapshots.length > 0
 
@@ -76,6 +77,7 @@ _.extend Connection.prototype,
   fromClient: (base, snapshots, is_retry) ->
 
     queue = @beginCaptureSnapshots()
+    old_base = @base
 
     try
       if snapshots?
@@ -130,7 +132,7 @@ _.extend Connection.prototype,
 
     # We send the updated base to the server if this was not a fast-forward
     # merge
-    to_client_base = if base? and base._id != @base._id then @base else null
+    to_client_base = if base? and base._id != @base._id and old_base?._id != @base._id then @base else null
 
     if to_client_base? or to_client_snapshots.length > 0
 
