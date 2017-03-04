@@ -45,10 +45,10 @@ _.extend DeltaMergeManager.prototype,
 
     connection.start = =>
 
-      @documents.find({_id: document_id}).observeChanges
-        added: (_id, doc) ->
+      doc = @documents.findOne {_id: document_id}
 
-          connection.fromServer _.omit doc.snapshot, "base_id", "parent_ids"
+      connection.fromServer _.omit doc.snapshot, "base_id", "parent_ids"
+
       #
       #   changed: (_id, changes) ->
       #
@@ -65,23 +65,24 @@ _.extend DeltaMergeManager.prototype,
 
     return connection
 
-  getOrCreateServer: (document_id) ->
-    console.log "Created Server", new Error().stack
+  getOrCreateServer: (document_id, connection_id) ->
 
     if not @snapshot_managers?
       @snapshot_managers = {}
     if not @servers?
       @servers = {}
 
-    servers = @servers[document_id] = @servers[document_id] ? []
+    servers = @servers[document_id] = @servers[document_id] ? {}
+
+    if servers[connection_id]
+
+      return servers[connection_id]
 
     server = @createServer document_id
     if @snapshot_managers[document_id]?
       server.snapshots = @snapshot_managers[document_id]
     else
       @snapshot_managers[document_id] = server.snapshots
-
-    servers.push server
 
     server.toClient = () =>
       args = _.toArray arguments
@@ -94,16 +95,26 @@ _.extend DeltaMergeManager.prototype,
 
     server.toServer = (base, snapshots) =>
 
-      for other_server in servers
-        if other_server != server
-          other_server.base = base
-          other_server.toClient base, snapshots
+      try
+        for _id, other_server of servers
+          
+          if other_server != server
+            other_server.base = base
+            other_server.toClient base, snapshots
+      finally
+        _toServer.apply server, arguments
 
     server.requestClientResync = () =>
 
       # XXX
 
+    server.onStop = () =>
+
+      # XXX server.destroy()
+
+      delete servers[connection_id]
+
     server.subscriptions = []
     server.start()
 
-    return server
+    return (servers[connection_id] = server)

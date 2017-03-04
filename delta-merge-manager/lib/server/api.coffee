@@ -7,13 +7,13 @@ _.extend DeltaMergeManager.prototype,
 
     @_checkSecurity("publish", document_id, publication.userId)
 
-    return @publish(document_id, publication)
+    return @publish(document_id, publication.connection.id, publication)
 
-  publish: (document_id, publication) ->
+  publish: (document_id, connection_id, publication) ->
     if not @messages_collection_name
       throw new Error "no-messages-collection"
 
-    server = @getOrCreateServer document_id
+    server = @getOrCreateServer document_id, connection_id
 
     publish = (args...) =>
 
@@ -26,32 +26,36 @@ _.extend DeltaMergeManager.prototype,
     # Send initial resync
     server.resyncClient null, publish
 
+    publication.onStop =>
+
+      server.onStop()
+
     return publication.ready()
 
-  requestResyncWithSecurity: (document_id, message, user_id) ->
+  requestResyncWithSecurity: (document_id, connection_id, message, user_id) ->
 
     @_checkSecurity "publish", document_id, user_id
 
-    return @requestResync(document_id, message)
+    return @requestResync(document_id, connection_id, message)
 
-  requestResync: (document_id, message) ->
+  requestResync: (document_id, connection_id, message) ->
 
-    server = @getOrCreateServer document_id
+    server = @getOrCreateServer document_id, connection_id
 
     message = null
     server.resyncClient(message, (args...) => message = args)
 
     return message
 
-  updateWithSecurity: (document_id, message, user_id) ->
+  updateWithSecurity: (document_id, connection_id, message, user_id) ->
 
-    @_checkSecurity "update", document_id, user_id
+    @_checkSecurity "update", document_id, connection_id, user_id
 
-    return @update(document_id, message)
+    return @update(document_id, connection_id, message)
 
-  update: (document_id, message) ->
+  update: (document_id, connection_id, message) ->
 
-    server = @getOrCreateServer document_id
+    server = @getOrCreateServer document_id, connection_id
 
     return server.fromClient.apply(server, message)
 
