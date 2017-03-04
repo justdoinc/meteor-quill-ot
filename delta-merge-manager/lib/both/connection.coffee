@@ -27,6 +27,9 @@ _.extend Connection.prototype,
           try
             @base = @snapshots.merge(base, @base)
 
+            if base._id
+              @snapshots.prune base, old_base
+
           catch error
 
             # If the error is missing-snapshots we're missing snapshots that
@@ -91,6 +94,9 @@ _.extend Connection.prototype,
           # sometimes there may be missing intermediate snapshots
           try
             @base = @snapshots.merge(@base, base)
+
+            if base._id?
+              @snapshots.prune(base, old_base)
 
           catch error
 

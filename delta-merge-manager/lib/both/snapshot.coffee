@@ -71,6 +71,65 @@ _.extend SnapshotManager.prototype,
 
     return @squash snapshot_or_id
 
+  prune: (a, b) ->
+
+    # 1. Compute the parent paths of each Snapshot
+    parent_paths_a = @parents(a)
+    parent_paths_b = @parents(b)
+
+    # 2. Iterate through all paths to find the first common parent
+    # we iterate backwards for efficiency
+    indexes_a = _.map(parent_paths_a, (path) => path.length - 1);
+    indexes_b = _.map(parent_paths_a, (path) => path.length - 1);
+
+    # 2.1 Find the largest index in each set of paths
+    index_a = -1
+    for index in indexes_a
+      if index > index_a
+        index_a = index
+
+    index_b = -1
+    for index in indexes_b
+      if index > index_b
+        index_b = index
+
+    # 2.2 Find the largest index which is found in both lists
+    index = index_a
+    if index_a > index_b
+      index = index_b
+
+    while index >= 0
+
+      # Note, this algorithm assumes that all paths have a common root which is
+      # the first item in each array.
+
+      for path_a in parent_paths_a
+        if path_a.length > index
+          for path_b in parent_paths_b
+            if path_b.length > index
+              if path_a[index] == path_b[index]
+                parent = @get(path_a[index])
+
+                # Don't prune merge commits because that's confusing to the
+                # parents() function
+                if not parent.parent_ids?
+
+                  # Important that we set .content here otherwise the
+                  # merge will have a delta but no base for the delta
+                  parent.content = @content(parent)
+                  parent.base_id = null
+                  parent.parent_ids = null
+
+                  # Persist the changes we made to this node, this is a bit of
+                  # a HACK, we should refactor it to use an api method.
+                  @_snapshots[parent._id] = parent
+
+      index--
+
+    return null
+
+    # XXX remove non-dependant snapshots
+
   # merge b into a and return the result
   merge: (a, b) ->
     a = @commit(a)

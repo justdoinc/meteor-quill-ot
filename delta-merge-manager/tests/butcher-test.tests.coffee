@@ -54,27 +54,33 @@ describe "hammer tests", ->
 
       connection.fromClient.apply connection, update
 
-  # it "test #2 many many merge operations", ->
-  #   @timeout(4000)
-  #   @slow(2500)
-  #
-  #   connection = manager.createServer "document"
-  #
-  #   managers = []
-  #   for i in [0..100]
-  #     m = new Connection()
-  #     managers.push m
-  #
-  #     for i in [0..100]
-  #
-  #       m.fromClient
-  #         base_id: m.base?._id
-  #         delta: new Delta().insert(i + '-')
-  #
-  #   for m in managers
-  #     connection.fromClient(m.base)
+  it "test #2 many many merge operations", ->
+    # We expect this to take a long time (<2500 ms), but if it takes
+    # much longer we kill it, just because otherwise the test suite will hang
+    @timeout(5000)
+    @slow(4000)
+
+    connection = manager.createServer "document"
+
+    managers = []
+    for i in [0..100]
+      m = new Connection()
+      managers.push m
+
+      for i in [0..100]
+
+        m.fromClient
+          base_id: m.base?._id
+          delta: new Delta().insert(i + '-')
+
+    for m in managers
+      connection.fromClient(m.base)
 
   it "test #3 ping pong merges", ->
+
+    # Since we're processing 100 messages we can't expect this test to finish
+    # under the normal threshold
+    @slow 250
 
     server_messages = []
     client_messages = []
@@ -93,7 +99,7 @@ describe "hammer tests", ->
     server.fromServer({ content: new Delta() })
     client.fromServer.apply(client, server_messages.pop())
 
-    for i in [0..15]
+    for i in [0..100]
 
       # Every eighth tick the client submits all messages to the server
       if (i % 8) == 0

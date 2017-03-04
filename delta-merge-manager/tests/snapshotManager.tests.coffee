@@ -166,6 +166,23 @@ describe "SnapshotManager", ->
 
       assert.deepEqual(manager.content(c), manager.content(d))
 
+
+    it "should not throw away needed commits when pruning", ->
+      base = manager.commit({ delta: new Delta().insert("|") })
+
+      a = manager.merge(base, { base_id: base._id, delta: new Delta().insert("a") })
+      b = manager.merge(a, { base_id: a._id, delta: new Delta().retain(1).insert("b") })
+
+      c = manager.merge(b, { base_id: a._id, delta: new Delta().retain(2).insert("c") })
+      d = manager.merge(c, a)
+
+      manager.prune(b, d)
+
+      e = manager.merge(b, { base_id: b._id, delta: new Delta().retain(2).delete(1).insert("-") })
+      f = manager.merge(d, e)
+
+      assert.deepEqual(manager.content(f), new Delta().insert("ab-c"))
+
     it "repeat merging of snapshots from parallel branches should not create duplicate content", ->
       base = manager.commit({ delta: new Delta().insert("|") })
 

@@ -5,19 +5,19 @@ _.extend DeltaMergeManager.prototype,
       throw new Error("null-document-id")
 
     connection = new Connection()
-    connection.snapshots._commit = (snapshot) =>
-
-      # XXX we can make this more efficient by throttling snapshot persistance
-      # to disk, e.g. 10ms wait and then squashing snapshots
-
-      snapshot.document_id = document_id
-
-      @snapshots.upsert
-        _id: snapshot._id
-      ,
-        _.omit snapshot, "_id"
-
-      return SnapshotManager.prototype._commit.apply(connection.snapshots, arguments)
+    # connection.snapshots._commit = (snapshot) =>
+    #
+    #   # XXX we can make this more efficient by throttling snapshot persistance
+    #   # to disk, e.g. 10ms wait and then squashing snapshots
+    #
+    #   snapshot.document_id = document_id
+    #
+    #   @snapshots.upsert
+    #     _id: snapshot._id
+    #   ,
+    #     _.omit snapshot, "_id"
+    #
+    #   return SnapshotManager.prototype._commit.apply(connection.snapshots, arguments)
 
     connection.toServer = (base) =>
       if not base?
@@ -32,6 +32,7 @@ _.extend DeltaMergeManager.prototype,
             base_id: base.base_id
             parent_ids: base.parent_ids
             content: connection.content(base)
+      , () => return
 
     connection.requestServerResync = (base) =>
 
@@ -47,20 +48,20 @@ _.extend DeltaMergeManager.prototype,
       @documents.find({_id: document_id}).observeChanges
         added: (_id, doc) ->
 
-          connection.fromServer doc.snapshot
-
-        changed: (_id, changes) ->
-
-          if changes.snapshot?._id
-
-            connection.fromServer changes.snapshot
-
-      @snapshots.find({document_id: document_id}).observeChanges
-        added: (_id, doc) ->
-
-          doc._id = _id
-
-          connection.fromServer null, [doc]
+          connection.fromServer _.omit doc.snapshot, "base_id", "parent_ids"
+      #
+      #   changed: (_id, changes) ->
+      #
+      #     if changes.snapshot?._id
+      #
+      #       connection.fromServer changes.snapshot
+      #
+      # @snapshots.find({document_id: document_id}).observeChanges
+      #   added: (_id, doc) ->
+      #
+      #     doc._id = _id
+      #
+      #     connection.fromServer null, [doc]
 
     return connection
 
