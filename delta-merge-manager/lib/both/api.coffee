@@ -66,15 +66,23 @@ _.extend DeltaMergeManager.prototype,
     return connection
 
   getOrCreateServer: (document_id) ->
-    if not @servers?
+    console.log "Created Server", new Error().stack
 
+    if not @snapshot_managers?
+      @snapshot_managers = {}
+    if not @servers?
       @servers = {}
 
-    if @servers[document_id]?
-
-      return @servers[document_id]
+    servers = @servers[document_id] = @servers[document_id] ? []
 
     server = @createServer document_id
+    if @snapshot_managers[document_id]?
+      server.snapshots = @snapshot_managers[document_id]
+    else
+      @snapshot_managers[document_id] = server.snapshots
+
+    servers.push server
+
     server.toClient = () =>
       args = _.toArray arguments
 
@@ -82,12 +90,20 @@ _.extend DeltaMergeManager.prototype,
 
         sub.apply this, args
 
+    _toServer = server.toServer
+
+    server.toServer = (base, snapshots) =>
+
+      for other_server in servers
+        if other_server != server
+          other_server.base = base
+          other_server.toClient base, snapshots
+
     server.requestClientResync = () =>
 
       # XXX
 
     server.subscriptions = []
-
     server.start()
 
-    return (@servers[document_id] = server)
+    return server
