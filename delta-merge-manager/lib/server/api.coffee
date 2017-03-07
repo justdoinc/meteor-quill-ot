@@ -3,73 +3,19 @@
 
 _.extend DeltaMergeManager.prototype,
 
-  publishWithSecurity: (document_id, publication) ->
+  submitChangesWithSecurity: (document_id, connection_id, message, user_id) ->
 
-    @_checkSecurity("publish", document_id, publication.userId)
+    @_checkSecurity "submitChanges", document_id, connection_id, user_id
 
-    return @publish(document_id, publication.connection.id, publication)
+    return @submitChanges(document_id, connection_id, message)
 
-  publish: (document_id, connection_id, publication) ->
-    if not @messages_collection_name
-      throw new Error "no-messages-collection"
+  submitChanges: (document_id, connection_id, delta) ->
+    # console.log(arguments)
 
-    server = @getOrCreateServer document_id, connection_id
+    connection = @getConnection document_id
+    connection.connect(connection_id)
 
-    publish = (args...) =>
-
-      publication.added @messages_collection_name, Random.id(),
-        document_id: document_id
-        message: args
-
-    server.subscriptions.push(publish)
-
-    # Send initial resync
-    server.resyncClient null, publish
-
-    publication.onStop =>
-
-      server.onStop()
-
-    return publication.ready()
-
-  requestResyncWithSecurity: (document_id, connection_id, message, user_id) ->
-
-    @_checkSecurity "publish", document_id, user_id
-
-    return @requestResync(document_id, connection_id, message)
-
-  requestResync: (document_id, connection_id, message) ->
-
-    server = @getOrCreateServer document_id, connection_id
-
-    message = null
-    server.resyncClient(message, (args...) => message = args)
-
-    return message
-
-  updateWithSecurity: (document_id, connection_id, message, user_id) ->
-
-    @_checkSecurity "update", document_id, connection_id, user_id
-
-    return @update(document_id, connection_id, message)
-
-  update: (document_id, connection_id, message) ->
-
-    server = @getOrCreateServer document_id, connection_id
-
-    return server.fromClient.apply(server, message)
-
-  submitSnapshotWithSecurity: (document_id, message, user_id) ->
-
-    @_checkSecurity "update", document_id, user_id
-
-    return @submitSnapshot(document_id, message)
-
-  submitSnapshot: (document_id, snapshot) ->
-
-    server = @getOrCreateServer document_id
-
-    return server.snapshots.commit(snapshot)
+    return connection.fromClient(connection_id, delta)
 
   # NOTE: It may be preferable to run the security check in app code and use
   # the publish and update api calls directly

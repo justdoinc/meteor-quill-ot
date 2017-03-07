@@ -2,31 +2,26 @@ _.extend DeltaMergeManager.prototype,
 
   createClient: (document_id) ->
 
-    # XXX destroy
+    connection = new DeltaServer()
 
-    old_base = null
-    connection = new Connection()
-    connection.toServer = (args...) =>
+    connection.toServer = (delta, callback) =>
+      if delta.ops.length
+        console.log delta + '', new Error()
 
-      Meteor.call "#{@messages_collection_name}/update", document_id, args
+      Meteor.call "#{@messages_collection_name}/submitChanges", document_id, delta, (err, result) =>
+        if not err?
+          callback null, new Delta(result)
 
-    connection.requestServerResync = (base) =>
-
-      Meteor.call "#{@messages_collection_name}/requestResync", document_id, base, (error, result) =>
-
-        if error
-          console.warn error
-        else
-          connection.fromServer.apply connection, result
-
-    connection.start = () =>
-
-      Meteor.subscribe "#{@messages_collection_name}/updates", document_id
-
-      @messages_collection.find({ document_id: document_id }).observeChanges
-        added: (_id, doc) =>
-
-          connection.fromServer.apply connection, doc.message
+    connection.start = (cb) =>
+      connection.connect("default")
+      Meteor.setInterval =>
+        cb(connection.fromClient("default", new Delta()))
+        connection.resyncServer()
+      , 100
+      return (delta) =>
+        console.log(delta.ops.map((op) => op.insert ? '...'))
+        cb(connection.fromClient("default", delta))
+        connection.submitChanges("default")
 
     return connection
 

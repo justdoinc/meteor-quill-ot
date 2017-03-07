@@ -28,8 +28,10 @@ Package.onUse(function (api) {
   api.use("reactive-var", both);
   api.use("tracker", client);
 
-  api.addFiles("lib/both/snapshot.coffee", both);
-  api.addFiles("lib/both/connection.coffee", both);
+  api.addFiles('lib/both/delta-server.coffee', both);
+  api.addFiles('lib/both/delta-server-mongo.coffee', both);
+
+  api.export("DeltaServer", both)
 
   api.addFiles("lib/both/init.coffee", both);
   api.addFiles("lib/both/errors-types.coffee", both);
@@ -48,18 +50,7 @@ Package.onUse(function (api) {
   api.addFiles("lib/client/api.coffee", client);
   api.addFiles("lib/client/methods.coffee", client);
 
-  // Uncomment only in packages that integrate with the main applications
-  // Pure logic packages should avoid any app specific integration.
-  // api.use("meteorspark:app@0.3.0", both);
-  // api.use("justdoinc:justdo-webapp-boot@1.0.0", both);
-  // api.addFiles("lib/both/app-integration.coffee", both);
-  // // Note: app-integration need to load last, so immediateInit procedures in
-  // // the server will have the access to the apis loaded after the init.coffee
-  // // file.
-
   api.export("DeltaMergeManager", both);
-  api.export("SnapshotManager", both);
-  api.export("Connection", both);
 });
 
 Package.onTest(function (api) {
@@ -76,9 +67,6 @@ Package.onTest(function (api) {
   // The package
   api.use('justdoinc:delta-merge-manager');
 
-  api.addFiles('tests/snapshotManager.tests.coffee');
-  api.addFiles('tests/connection.tests.coffee');
-  api.addFiles('tests/createServer.tests.coffee');
-  api.addFiles('tests/butcher-test.tests.coffee');
-
+  api.addFiles('tests/delta-server.tests.coffee')
+  api.addFiles('tests/delta-server-mongo.tests.coffee')
 });

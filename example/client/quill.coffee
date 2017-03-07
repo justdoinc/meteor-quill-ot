@@ -4,12 +4,17 @@ Template.quill.onRendered ->
 
   @connection = DeltaManager.createClient "doc"
 
-  @connection.toClient = (snapshot) =>
-    doc = @connection.content(snapshot)
+  # @autorun =>
+
+  original = new Delta()
+  update = @connection.start (doc) =>
+    if doc.diff(original).ops.length == 0
+      return
 
     cursor = @editor.getSelection()
     diff = @editor.getContents().diff doc
     @editor.setContents doc, "api"
+    original = doc
 
     if cursor?
       newIndex = diff.transformPosition(cursor.index)
@@ -18,11 +23,4 @@ Template.quill.onRendered ->
 
   @editor.on 'text-change', (delta, original, source) =>
     if source == "user"
-      Meteor.defer =>
-        @connection.fromClient
-          base_id: @connection.base?._id
-          delta: (@connection.content() ? new Delta()).diff(@editor.getContents())
-
-  @autorun =>
-
-    @connection.start()
+      Meteor.defer => update(delta)

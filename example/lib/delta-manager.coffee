@@ -4,5 +4,4 @@
 
 if Meteor.isServer
   DeltaManager.security
-    update: -> true
-    publish: -> true
+    submitChanges: -> true
