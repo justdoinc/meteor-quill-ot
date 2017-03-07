@@ -25,6 +25,7 @@ Package.onUse(function(api) {
   api.imply("cwohlman:quill-delta@3.4.3", both);
 
   api.addFiles('delta-server.coffee', both);
+  api.addFiles('delta-server-mongo.coffee', both);
 
   api.export("DeltaServer", both)
 });
@@ -35,10 +36,12 @@ Package.onTest(function(api) {
   api.use("coffeescript", both);
   api.use("underscore", both);
   api.use("random", both);
+  api.use("mongo", both);
 
   // The tests
   api.use('practicalmeteor:mocha');
   api.use('practicalmeteor:chai');
 
   api.addFiles('delta-server.tests.coffee')
+  api.addFiles('delta-server-mongo.tests.coffee')
 });

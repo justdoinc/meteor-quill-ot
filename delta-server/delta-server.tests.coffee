@@ -63,10 +63,39 @@ describe "DeltaServer", ->
       callback = cb
     manager.submitChanges(client_id)
     client = manager.fromClient(client_id, new Delta().retain("hi there".length).insert(", Joe!"))
-
     callback(null, new Delta().insert("hey there"))
     manager.submitChanges(client_id)
     client = manager.fromClient(client_id, new Delta().retain("hi there".length).delete(", Joe!".length).insert(", Sam!"))
     callback(null, new Delta().insert("hi there, Joe!"))
     client = manager.fromClient(client_id, new Delta())
     assert.deepEqual(client, new Delta().insert("hi there, Sam!"))
+
+  it "tourture test", ->
+
+    # every 2 seconds the client submits an operation
+    # every 3 seconds the server submits an operation
+    # sometimes the network is buggy :)
+    manager.server = new Delta().insert("-")
+    old_server = manager.server
+    server = manager.server
+    client = manager.fromClient(client_id, new Delta())
+    callbacks = []
+    manager.toServer = (op, cb) => callbacks.push([op, cb])
+
+    content = () => client.ops[0].insert
+
+    for i in [0..15]
+      if i % 2 == 0
+        # add a dot to end of content
+        client = manager.fromClient(client_id, new Delta().retain(content().length).insert("o"))
+        manager.submitChanges(client_id)
+      if i % 3 == 0
+        server = server.compose(new Delta().insert("x"))
+      if i % 4 != 0 and callbacks.length != 0
+        [op, callback] = callbacks.shift()
+        update = old_server.diff(server).transform(op)
+        server = server.compose(update)
+        old_server = server
+        callback(null, server)
+
+    assert.deepEqual(client, new Delta().insert("xxxxx-oooooooo"))

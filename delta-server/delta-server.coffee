@@ -62,3 +62,8 @@ _.extend DeltaServer.prototype,
       @server = result
       connection.base = old_client
       connection.paused = false
+
+  resyncServer: () ->
+
+    @toServer new Delta(), (err, result) =>
+      @server = result
