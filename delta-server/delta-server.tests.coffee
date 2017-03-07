@@ -31,10 +31,42 @@ describe "DeltaServer", ->
 
     manager.fromClient(client_id, new Delta())
     client = manager.fromClient(client_id, new Delta().retain(2).insert(" there"))
-    manager.toServer = (update) ->
-      return new Delta().insert("hey there")
+    manager.toServer = (update, cb) ->
+      return cb(null, new Delta().insert("hey there"))
     manager.submitChanges(client_id)
 
     client = manager.fromClient(client_id, new Delta().retain(8).insert(", Joe!"))
-
     assert.deepEqual(client, new Delta().insert("hey there, Joe!"))
+
+  it "should handle async sumbitChanges calls", ->
+    manager.server = new Delta().insert("hi")
+
+    manager.fromClient(client_id, new Delta())
+    client = manager.fromClient(client_id, new Delta().retain(2).insert(" there"))
+    callback = null
+    manager.toServer = (update, cb) ->
+      callback = cb
+    manager.submitChanges(client_id)
+    client = manager.fromClient(client_id, new Delta().retain(8).insert(", Joe!"))
+
+    callback(null, new Delta().insert("hey there"))
+    client = manager.fromClient(client_id, new Delta())
+    assert.deepEqual(client, new Delta().insert("hey there, Joe!"))
+
+  it "should handle multiple async sumbitChanges calls", ->
+    manager.server = new Delta().insert("hi")
+
+    manager.fromClient(client_id, new Delta())
+    client = manager.fromClient(client_id, new Delta().retain(2).insert(" there"))
+    callback = null
+    manager.toServer = (update, cb) ->
+      callback = cb
+    manager.submitChanges(client_id)
+    client = manager.fromClient(client_id, new Delta().retain("hi there".length).insert(", Joe!"))
+
+    callback(null, new Delta().insert("hey there"))
+    manager.submitChanges(client_id)
+    client = manager.fromClient(client_id, new Delta().retain("hi there".length).delete(", Joe!".length).insert(", Sam!"))
+    callback(null, new Delta().insert("hi there, Joe!"))
+    client = manager.fromClient(client_id, new Delta())
+    assert.deepEqual(client, new Delta().insert("hi there, Sam!"))

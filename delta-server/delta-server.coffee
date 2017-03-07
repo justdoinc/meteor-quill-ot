@@ -15,6 +15,10 @@ _.extend DeltaServer.prototype,
 
     return [id, @connections[id].client]
 
+  disconnect: (id) ->
+
+    delete @connections[id]
+
   fromClient: (id, diff) ->
     # Assume base: +a
     # Assume server: +ab
@@ -29,9 +33,15 @@ _.extend DeltaServer.prototype,
     connection = @connections[id]
 
     connection.client = connection.client.compose(diff)
+
+    if connection.paused
+      return connection.client
+
     update = connection.base.diff(@server).transform(connection.base.diff(connection.client))
     connection.client = @server.compose(update)
-    connection.base = @server
+
+    if not connection.paused
+      connection.base = @server
 
     # XXX defer(toServer(@server.diff(@client)))
 
@@ -46,5 +56,9 @@ _.extend DeltaServer.prototype,
 
     update = connection.base.diff(@server).transform(connection.base.diff(connection.client))
 
-    @server = @toServer(update)
-    connection.base = connection.client
+    connection.paused = true
+    old_client = connection.client
+    @toServer update, (err, result) =>
+      @server = result
+      connection.base = old_client
+      connection.paused = false
