@@ -3,9 +3,6 @@
   server = new @DeltaServer()
   _fromClient = server.fromClient
   server.fromClient = (client_id, delta) ->
-    if delta.ops.length
-      console.log delta + ''
-
     result = _fromClient.apply(server, arguments)
 
     server.submitChanges(client_id)
@@ -26,7 +23,6 @@
         content: update
 
     if result == 0
-      # console.log id, store.findOne()
       new_server = store.findOne(id)
       if new_server
         new_server.content = new Delta(new_server.content)
@@ -41,14 +37,12 @@
       old_server.content = update
       callback(null, update)
 
-  xxx = store.upsert
+  store.upsert
     _id: id
   ,
     $setOnInsert:
       change_key: null
       content: new Delta()
-
-  # console.log xxx
 
   server.resyncServer()
 

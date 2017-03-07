@@ -10,8 +10,6 @@ _.extend DeltaMergeManager.prototype,
     return @submitChanges(document_id, connection_id, message)
 
   submitChanges: (document_id, connection_id, delta) ->
-    # console.log(arguments)
-
     connection = @getConnection document_id
     connection.connect(connection_id)
 

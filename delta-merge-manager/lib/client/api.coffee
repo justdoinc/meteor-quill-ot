@@ -5,9 +5,6 @@ _.extend DeltaMergeManager.prototype,
     connection = new DeltaServer()
 
     connection.toServer = (delta, callback) =>
-      if delta.ops.length
-        console.log delta + '', new Error()
-
       Meteor.call "#{@messages_collection_name}/submitChanges", document_id, delta, (err, result) =>
         if not err?
           callback null, new Delta(result)
@@ -19,7 +16,6 @@ _.extend DeltaMergeManager.prototype,
         connection.resyncServer()
       , 100
       return (delta) =>
-        console.log(delta.ops.map((op) => op.insert ? '...'))
         cb(connection.fromClient("default", delta))
         connection.submitChanges("default")
 
