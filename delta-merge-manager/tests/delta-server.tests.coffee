@@ -84,7 +84,7 @@ describe "DeltaServer", ->
 
     content = () => client.ops[0].insert
 
-    for i in [0..15]
+    for i in [0...100]
       if i % 2 == 0
         # add a dot to end of content
         client = manager.fromClient(client_id, new Delta().retain(content().length).insert("o"))
@@ -98,4 +98,5 @@ describe "DeltaServer", ->
         old_server = server
         callback(null, server)
 
-    assert.deepEqual(client, new Delta().insert("xxxxx-oooooooo"))
+    expected = [0...33].map(() => 'x').join('') + '-' + [0...50].map(() => 'o').join('')
+    assert.deepEqual(client.diff(new Delta().insert(expected)), new Delta())

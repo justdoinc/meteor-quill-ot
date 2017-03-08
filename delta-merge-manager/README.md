@@ -3,9 +3,10 @@ Delta Merge Manager
 
 Backbone for realtime richtext collaboration using quilljs style deltas.
 
-The Document Structure
+API
 -------
 
+The api is a work in progress, see the example app for how to use the package.
 
 
 Testing
