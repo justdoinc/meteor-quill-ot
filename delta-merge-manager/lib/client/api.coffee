@@ -16,7 +16,7 @@ _.extend DeltaMergeManager.prototype,
     client_id = "default"
     connection.connect(client_id)
 
-    editor.on 'text-change', (delta, original, source) =>
+    on_change_callback = (delta, original, source) =>
 
       # Ideally all changes should be recorded, including changes made via
       # the api, however at the moment the only user of the api is us and
@@ -25,6 +25,8 @@ _.extend DeltaMergeManager.prototype,
       if source == "user"
         connection.fromClient(client_id, delta)
         connection.submitChanges(client_id)
+
+    editor.on 'text-change', on_change_callback
 
     previous_update = new Delta()
     submitUpdate = (doc) =>
@@ -74,7 +76,12 @@ _.extend DeltaMergeManager.prototype,
       100
 
     connection.destroy = () =>
+      editor.off 'text-change', on_change_callback
       Meteor.stopInterval update_handle
+
+    if Tracker.currentComputation?
+      Tracker.currentComputation.onStop =>
+        connection.destroy()
 
     return connection
 
