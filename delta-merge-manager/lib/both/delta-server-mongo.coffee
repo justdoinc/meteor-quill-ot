@@ -1,6 +1,8 @@
 @DeltaServer.MongoConnection = (store, id) =>
 
   server = new @DeltaServer()
+  server.document_id = id
+  
   _fromClient = server.fromClient
   server.fromClient = (client_id, delta) ->
     result = _fromClient.apply(server, arguments)

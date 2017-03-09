@@ -22,14 +22,15 @@ Package.onUse(function (api) {
   api.use("meteorspark:logger@0.3.0", both);
   // api.use("justdoinc:justdo-helpers@1.0.0", both);
 
-  api.use("cwohlman:quill-delta@3.4.3", both);
-  api.imply("cwohlman:quill-delta@3.4.3", both);
+  api.use("cwohlman:quill-delta@3.4.3_1", both);
+  api.use("cwohlman:render-quill@1.0.5_1", both);
 
   api.use("reactive-var", both);
   api.use("tracker", client);
 
   api.addFiles('lib/both/delta-server.coffee', both);
   api.addFiles('lib/both/delta-server-mongo.coffee', both);
+  api.addFiles('lib/both/delta-server-sync.coffee', server);
 
   api.export("DeltaServer", both)
 
@@ -66,7 +67,9 @@ Package.onTest(function (api) {
 
   // The package
   api.use('justdoinc:delta-merge-manager');
+  api.use("cwohlman:quill-delta@3.4.3_1", both);
 
   api.addFiles('tests/delta-server.tests.coffee')
   api.addFiles('tests/delta-server-mongo.tests.coffee')
+  api.addFiles('tests/delta-server-sync.tests.coffee', server)
 });
