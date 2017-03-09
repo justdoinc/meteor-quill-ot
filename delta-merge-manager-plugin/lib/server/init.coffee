@@ -1,5 +1,10 @@
 _.extend DeltaMergeManagerPlugin.prototype,
   _immediateInit: ->
+
+    @delta_merge_manager.security
+      # XXX XXX XXX
+      submitChanges: () -> true
+
     return
 
   _deferredInit: ->

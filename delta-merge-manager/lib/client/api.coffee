@@ -77,7 +77,7 @@ _.extend DeltaMergeManager.prototype,
 
     connection.destroy = () =>
       editor.off 'text-change', on_change_callback
-      Meteor.stopInterval update_handle
+      Meteor.clearInterval update_handle
 
     if Tracker.currentComputation?
       Tracker.currentComputation.onStop =>

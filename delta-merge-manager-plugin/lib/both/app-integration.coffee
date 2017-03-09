@@ -13,7 +13,7 @@
 
 # **Method A:** If you aren't depending on any env variable just comment the following
 
-# APP.delta_merge_manager_plugin = new DeltaMergeManagerPlugin()
+APP.delta_merge_manager_plugin = new DeltaMergeManagerPlugin()
 
 # **Method B:** If you are depending on env variables to decide whether or not to load
 # this package, or even if you use them inside the constructor, you need to wait for

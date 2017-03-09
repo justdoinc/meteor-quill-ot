@@ -1,5 +1,5 @@
 Template.quill_editor.onCreated ->
-  @editor_id = Random.id()
+  @editor_id = Random.id().replace /^\d/, "x"
 
 Template.quill_editor.helpers
 
@@ -21,4 +21,4 @@ Template.quill_editor.onRendered ->
   # (and create a new one) if the document_id ever changes.
   @autorun =>
     @editor.setContents({ops: []})
-    @connection = DeltaManager.createQuillClient(document_id.get(), @editor)
+    @connection = APP.delta_merge_manager_plugin.delta_merge_manager.createQuillClient(document_id.get(), @editor)

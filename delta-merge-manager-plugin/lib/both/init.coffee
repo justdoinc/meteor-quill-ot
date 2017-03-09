@@ -140,6 +140,9 @@ _.extend DeltaMergeManagerPlugin.prototype,
     # Add here code that should run, in the Server and Client, during the JS
     # tick in which we create the object instance.
 
+    @delta_merge_manager = new DeltaMergeManager
+      documents: new Mongo.Collection('delta-documents')
+
     return
 
   _bothDeferredInit: ->
