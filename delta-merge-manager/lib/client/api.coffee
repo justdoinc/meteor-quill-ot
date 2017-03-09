@@ -7,9 +7,9 @@ _.extend DeltaMergeManager.prototype,
       Meteor.call "#{@messages_collection_name}/submitChanges", document_id, delta, (err, result) =>
         if not err?
           callback null, new Delta(result)
-          # Meteor.defer =>
-          #   new_doc = connection.fromClient(client_id, new Delta())
-          #   submitUpdate(new_doc)
+          Meteor.defer =>
+            new_doc = connection.fromClient(client_id, new Delta())
+            submitUpdate(new_doc)
 
 
     # This connection is client side only the only 'client' is the quill editor
@@ -23,14 +23,8 @@ _.extend DeltaMergeManager.prototype,
       # we don't want to create circular calls here (we cause the editor to
       # emit text-change updates whenever the server submits an update)
       if source == "user"
-
-        # For some reason quill seems to choke on updates that happen inside of
-        # the text-change callback. Therefor we apply any returned change in a
-        # defer callback
-        Meteor.defer =>
-          new_doc = connection.fromClient(client_id, delta)
-          submitUpdate(new_doc)
-          connection.submitChanges(client_id)
+        connection.fromClient(client_id, delta)
+        connection.submitChanges(client_id)
 
     previous_update = new Delta()
     submitUpdate = (doc) =>
@@ -77,7 +71,7 @@ _.extend DeltaMergeManager.prototype,
       submitUpdate(new_doc)
       connection.resyncServer()
     ,
-      100
+      33
 
     connection.destroy = () =>
       Meteor.stopInterval update_handle
