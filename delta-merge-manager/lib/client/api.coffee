@@ -71,7 +71,7 @@ _.extend DeltaMergeManager.prototype,
       submitUpdate(new_doc)
       connection.resyncServer()
     ,
-      33
+      100
 
     connection.destroy = () =>
       Meteor.stopInterval update_handle
