@@ -15,16 +15,20 @@ _.extend DeltaServer.prototype,
 
       _toServer.apply(@, [delta, inner_callback])
 
+_.extend DeltaMergeManager.prototype,
+
   attachRenderCallback: (cb) ->
     renderFns = {}
-    @onAfterToServer (result, connection) =>
-      # Throttle the render function so that we render at most once per second
-      id = connection.document_id
-      renderFns[id] = renderFns[id] ? _.throttle (doc) =>
-        RenderQuill doc, (error, result) =>
-          if error?
-            return console.warn("Exception in render quill", error)
-          cb(id, result)
-      , 1000
 
-      renderFns[id](result)
+    @onConnection (connection) =>
+      connection.onAfterToServer (result, connection) =>
+        # Throttle the render function so that we render at most once per second
+        id = connection.document_id
+        renderFns[id] = renderFns[id] ? _.throttle (doc) =>
+          RenderQuill doc, (error, result) =>
+            if error?
+              return console.warn("Exception in render quill", error)
+            cb(id, result)
+        , 1000
+
+        renderFns[id](result)

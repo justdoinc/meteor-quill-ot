@@ -1,9 +1,12 @@
 _.extend DeltaMergeManagerPlugin.prototype,
   _immediateInit: ->
 
-    @delta_merge_manager.security
-      # XXX XXX XXX
-      submitChanges: () -> true
+    @callbacks = []
+    @delta_merge_manager._checkSecurity = (document_id, changes, user_id) =>
+      @_checkSecurity(document_id, changes, user_id)
+
+    @delta_merge_manager.attachRenderCallback (document_id, html) =>
+      @_onAfterSaveHook(document_id, html)
 
     return
 

@@ -30,13 +30,13 @@ Package.onUse(function (api) {
 
   api.addFiles('lib/both/delta-server.coffee', both);
   api.addFiles('lib/both/delta-server-mongo.coffee', both);
-  api.addFiles('lib/both/delta-server-sync.coffee', server);
 
   api.export("DeltaServer", both)
 
   api.addFiles("lib/both/init.coffee", both);
   api.addFiles("lib/both/errors-types.coffee", both);
   api.addFiles("lib/both/api.coffee", both);
+  api.addFiles('lib/both/delta-server-sync.coffee', server);
   api.addFiles("lib/both/schemas.coffee", both);
 
   api.addFiles("lib/server/init.coffee", server);

@@ -1,16 +1,20 @@
 _.extend DeltaMergeManager.prototype,
 
-  createQuillClient: (document_id, editor) ->
+  createQuillClient: (document_id, editor, initial_html) ->
 
     connection = new DeltaServer()
     connection.toServer = (delta, callback) =>
       Meteor.call "#{@messages_collection_name}/submitChanges", document_id, delta, (err, result) =>
         if not err?
-          callback null, new Delta(result)
+          result = new Delta(result)
+          callback null, result
+          if result.ops?.length == 0 and initial_html?
+            editor.clipboard.dangerouslyPasteHTML(initial_html)
+            initial_html = null
+
           Meteor.defer =>
             new_doc = connection.fromClient(client_id, new Delta())
             submitUpdate(new_doc)
-
 
     # This connection is client side only the only 'client' is the quill editor
     client_id = "default"
@@ -78,6 +82,7 @@ _.extend DeltaMergeManager.prototype,
     connection.destroy = () =>
       editor.off 'text-change', on_change_callback
       Meteor.clearInterval update_handle
+      # Meteor.call 'closeConnection'
 
     if Tracker.currentComputation?
       Tracker.currentComputation.onStop =>

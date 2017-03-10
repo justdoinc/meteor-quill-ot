@@ -2,7 +2,7 @@
 
   server = new @DeltaServer()
   server.document_id = id
-  
+
   _fromClient = server.fromClient
   server.fromClient = (client_id, delta) ->
     result = _fromClient.apply(server, arguments)
@@ -39,12 +39,16 @@
       old_server.content = update
       callback(null, update)
 
-  store.upsert
+  console.log id
+
+  result = store.upsert
     _id: id
   ,
     $setOnInsert:
       change_key: null
       content: new Delta()
+
+  console.log result
 
   server.resyncServer()
 

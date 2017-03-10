@@ -5,28 +5,42 @@ _.extend DeltaMergeManager.prototype,
 
   submitChangesWithSecurity: (document_id, connection_id, message, user_id) ->
 
-    @_checkSecurity "submitChanges", document_id, connection_id, user_id
+    result = @_checkSecurity document_id, message, user_id
+    if result?.ops?
+      message = result
+    else if result != true
+      throw new Error "security-check-failed"
 
     return @submitChanges(document_id, connection_id, message)
 
+  # openConnection: (document_id, connection_id, initial_delta) ->
+  #   do_initialize = not @connections[document_id]?
+  #
+  #   connection = @getConnection document_id
+  #   connection.connect(connection_id)
+  #
+  #   if do_initialize
+  #     return connection.fromClient connection_id, initial_delta
+  #
+  #   return connection.fromClient connection_id, new Delta()
+  #
+  closeConnection: (document_id, connection_id) ->
+    connection = @getConnection document_id
+    delete connection.connections[connection_id]
+
+    if not _.any connection.connections
+      # @documents.remove { _id: document_id }
+      delete @connections[document_id]
+
   submitChanges: (document_id, connection_id, delta) ->
     connection = @getConnection document_id
-    connection.connect(connection_id)
+    connection.connect connection_id
 
     return connection.fromClient(connection_id, delta)
 
   # NOTE: It may be preferable to run the security check in app code and use
   # the publish and update api calls directly
-  _checkSecurity: (action_name, document_id, user_id) ->
-
-    if not @_allow_actions?
-      throw @_error "security-not-configured"
-
-    if not @_allow_actions[action_name]?
-      throw @_error "not-permitted", "The action is not allowed."
-
-    if not @_allow_actions[action_name](user_id, document_id)
-      throw @_error "not-permitted", "The user is not allowed to perform the action on the document."
+  _checkSecurity: (document_id, message, user_id) -> throw @_error "security-not-configured"
 
   security: (actions) ->
     # TODO: Validate actions against some kind of schema
