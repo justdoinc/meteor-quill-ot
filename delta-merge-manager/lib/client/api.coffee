@@ -8,8 +8,13 @@ _.extend DeltaMergeManager.prototype,
         if not err?
           result = new Delta(result)
           callback null, result
-          if result.ops?.length == 0 and initial_html?
-            editor.clipboard.dangerouslyPasteHTML(initial_html)
+
+          # After the first server sync check if there was initial_html if so
+          # and if there's no original text in the editor, paste it into the
+          # editor.
+          if initial_html?
+            if result.ops?.length == 0
+              editor.clipboard.dangerouslyPasteHTML(initial_html)
             initial_html = null
 
           Meteor.defer =>
