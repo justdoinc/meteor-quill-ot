@@ -1,3 +1,20 @@
 <template name="quill_editor">
-  <div id="{{editor_id}}"></div>
+  <div class="quill-wrapper {{#if is_full_screen}}quill-wrapper-full-screen{{/if}}">
+    <div id="{{editor_id}}"></div>
+    {{#if options.full_screen}}
+      {{#if is_full_screen}}
+        <div class="quill-full-screen-button-wrapper">
+          <button class="quill-full-screen-button">
+            <span class="fa fa-compress"></span>
+          </button>
+        </div>
+      {{else}}
+        <div class="quill-full-screen-button-wrapper">
+          <button class="quill-full-screen-button">
+            <span class="fa fa-expand"></span>
+          </button>
+        </div>
+      {{/if}}
+    {{/if}}
+  </div>
 </template>

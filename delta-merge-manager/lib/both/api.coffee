@@ -10,6 +10,18 @@ _.extend DeltaMergeManager.prototype,
 
     return connection
 
+  setAuthor: (delta, author) ->
+    delta = new Delta(delta)
+    result = delta.map (op) ->
+      if op.insert?
+        op = _.clone(op)
+        op.attributes = if op.attributes? then op.clone(op.attributes) else {}
+        op.attributes.author = author
+
+      return op
+
+    return new Delta({ops: result})
+
   onConnection: (cb) ->
 
     @onConectionCallbacks = @onConectionCallbacks ? []

@@ -17,10 +17,7 @@ _.extend DeltaMergeManagerPlugin.prototype,
     callbacks = _.find @callbacks, (callback) => callback.regex.test(document_id)
 
     if callbacks?
-
       return callbacks.onAfterSave(document_id, html)
-
-
 
   destroy: ->
     if @destroyed

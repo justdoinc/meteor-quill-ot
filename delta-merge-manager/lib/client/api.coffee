@@ -14,7 +14,9 @@ _.extend DeltaMergeManager.prototype,
           # editor.
           if initial_html?
             if result.ops?.length == 0
-              editor.clipboard.dangerouslyPasteHTML(initial_html)
+              # Remove the trailing newline so that when we paste the html,
+              # the callback correctly adds the entire contents of the editor.
+              editor.clipboard.dangerouslyPasteHTML(initial_html, 'user')
             initial_html = null
 
           Meteor.defer =>
@@ -25,6 +27,7 @@ _.extend DeltaMergeManager.prototype,
     client_id = "default"
     connection.connect(client_id)
 
+    current = new Delta()
     on_change_callback = (delta, original, source) =>
 
       # Ideally all changes should be recorded, including changes made via
@@ -32,7 +35,10 @@ _.extend DeltaMergeManager.prototype,
       # we don't want to create circular calls here (we cause the editor to
       # emit text-change updates whenever the server submits an update)
       if source == "user"
-        connection.fromClient(client_id, delta)
+        updated = new Delta(editor.getContents() ? new Delta())
+        change = current.diff(updated)
+        current = updated
+        connection.fromClient(client_id, change)
         connection.submitChanges(client_id)
 
     editor.on 'text-change', on_change_callback
@@ -59,6 +65,7 @@ _.extend DeltaMergeManager.prototype,
 
       # Update the editor and update the previous_update variable
       editor.setContents doc, 'api'
+      current = doc
       previous_update = doc
 
       # If the user isn't focused on the editor there won't be a cursor and
@@ -87,7 +94,7 @@ _.extend DeltaMergeManager.prototype,
     connection.destroy = () =>
       editor.off 'text-change', on_change_callback
       Meteor.clearInterval update_handle
-      # Meteor.call 'closeConnection'
+      Meteor.call "#{@messages_collection_name}/closeConnection", document_id
 
     if Tracker.currentComputation?
       Tracker.currentComputation.onStop =>

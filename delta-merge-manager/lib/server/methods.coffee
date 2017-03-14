@@ -8,4 +8,8 @@ _.extend DeltaMergeManager.prototype,
 
           return manager.submitChangesWithSecurity document_id, @connection.id, delta, @userId
 
+        "#{manager.messages_collection_name}/closeConnection": (document_id) ->
+
+          return manager.closeConnection document_id, @connection.id
+
     return

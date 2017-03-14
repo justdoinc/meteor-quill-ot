@@ -13,23 +13,14 @@ _.extend DeltaMergeManager.prototype,
 
     return @submitChanges(document_id, connection_id, message)
 
-  # openConnection: (document_id, connection_id, initial_delta) ->
-  #   do_initialize = not @connections[document_id]?
-  #
-  #   connection = @getConnection document_id
-  #   connection.connect(connection_id)
-  #
-  #   if do_initialize
-  #     return connection.fromClient connection_id, initial_delta
-  #
-  #   return connection.fromClient connection_id, new Delta()
-  #
   closeConnection: (document_id, connection_id) ->
     connection = @getConnection document_id
+
+    # Mark this connection as disconnected
     delete connection.connections[connection_id]
 
     if not _.any connection.connections
-      # @documents.remove { _id: document_id }
+      @documents.remove { _id: document_id }
       delete @connections[document_id]
 
   submitChanges: (document_id, connection_id, delta) ->

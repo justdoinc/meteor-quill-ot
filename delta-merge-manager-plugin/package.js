@@ -57,6 +57,7 @@ Package.onUse(function (api) {
 
   api.addFiles("lib/client/templates/quill-editor-template.html", client)
   api.addFiles("lib/client/templates/quill-editor-template.coffee", client)
+  api.addFiles("lib/client/templates/quill-editor-template.sass", client)
 
   // Uncomment only in packages that integrate with the main applications
   // Pure logic packages should avoid any app specific integration.

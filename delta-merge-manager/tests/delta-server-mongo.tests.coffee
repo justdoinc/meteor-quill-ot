@@ -81,7 +81,6 @@ describe "DeltaServer.MongoConnection", ->
           _running = true
           _toServer.apply manager, args
           _running = false
-          console.log 'done'
         , 1
 
       _otherRunning = false
