@@ -20,7 +20,7 @@ _.extend DeltaMergeManager.prototype,
     delete connection.connections[connection_id]
 
     if not _.any connection.connections
-      @documents.remove { _id: document_id }
+      # @documents.remove { _id: document_id }
       delete @connections[document_id]
 
   submitChanges: (document_id, connection_id, delta) ->
