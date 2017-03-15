@@ -59,6 +59,10 @@ Package.onUse(function (api) {
   api.addFiles("lib/client/templates/quill-editor-template.coffee", client)
   api.addFiles("lib/client/templates/quill-editor-template.sass", client)
 
+  api.addFiles("lib/client/templates/quill-click-to-edit-template.html", client)
+  api.addFiles("lib/client/templates/quill-click-to-edit-template.coffee", client)
+  api.addFiles("lib/client/templates/quill-click-to-edit-template.sass", client)
+
   // Uncomment only in packages that integrate with the main applications
   // Pure logic packages should avoid any app specific integration.
   api.use("meteorspark:app@0.3.0", both);

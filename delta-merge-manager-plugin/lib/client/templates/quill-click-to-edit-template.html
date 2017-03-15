@@ -1,0 +1,23 @@
+<template name="quill_click_to_edit">
+  <div class="quill-click-to-edit-wrapper">
+    {{#if editing}}
+      {{> quill_editor this}}
+      <div class="quill-click-to-edit-close-button-wrapper">
+        <button type="button" class="btn btn-block btn-primary quill-click-to-edit-close-button">
+          Done Editing
+        </button>
+      </div>
+    {{else}}
+      <div class="quill-html-wrapper">
+        {{{cleanedHTML}}}
+      </div>
+      {{#if mayEdit}}
+        <div class="quill-click-to-edit-button-wrapper">
+          <button type="button" class="quill-click-to-edit-button">
+            <span class="fa fa-pencil-square-o"></span>
+          </button>
+        </div>
+      {{/if}}
+    {{/if}}
+  </div>
+</template>
