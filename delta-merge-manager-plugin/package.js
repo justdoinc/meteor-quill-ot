@@ -54,6 +54,7 @@ Package.onUse(function (api) {
   api.addFiles("lib/client/init.coffee", client);
   api.addFiles("lib/client/api.coffee", client);
   api.addFiles("lib/client/methods.coffee", client);
+  api.addFiles("lib/client/jquery-plugin.coffee", client);
 
   api.addFiles("lib/client/templates/quill-editor-template.html", client)
   api.addFiles("lib/client/templates/quill-editor-template.coffee", client)
