@@ -70,6 +70,54 @@ describe "DeltaServer", ->
     client = manager.fromClient(client_id, new Delta())
     assert.deepEqual(client, new Delta().insert("hi there, Sam!"))
 
+
+  it "should handle closed connections", ->
+    manager.server = new Delta().insert("hi")
+
+    manager.fromClient(client_id, new Delta())
+    client = manager.fromClient(client_id, new Delta().retain(2).insert(" there"))
+    base = client
+
+    change = new Delta().retain(client.ops[0].insert.length).insert("--")
+    old_base = client.compose(change)
+    manager.fromClient(client_id, change)
+
+    final_client = manager.finalize(client_id, old_base, new Delta().insert("--hi there--"))
+
+    assert.deepEqual(final_client, new Delta().insert("--hi there--"))
+
+  it "should handle closed connections with intervening server changes", ->
+    manager.server = new Delta().insert("hi")
+
+    manager.fromClient(client_id, new Delta())
+    client = manager.fromClient(client_id, new Delta().retain(2).insert(" there"))
+    base = client
+
+    change = new Delta().retain(client.ops[0].insert.length).insert("--")
+    old_base = client.compose(change)
+    update = manager.fromClient(client_id, change)
+    manager.toServer = (x, cb) => return cb(null, update.compose(new Delta().retain(2).delete(1).insert('--')))
+    manager.submitChanges(client_id)
+
+    final_client = manager.finalize(client_id, old_base, new Delta().insert("--hi there--"))
+
+    assert.deepEqual(final_client, new Delta().insert("--hi--there--"))
+
+  it "closed connections test case - 1", ->
+    manager.server = new Delta().insert("---")
+
+    manager.fromClient(client_id, new Delta())
+
+    base = manager.fromClient(client_id, new Delta().delete(3).insert('xxx'))
+    manager.toServer = (update, cb) ->
+      return cb(null, new Delta().insert("xxx"))
+    manager.submitChanges(client_id)
+
+
+    client = new Delta().insert('___')
+    manager.finalize(client_id, base, client)
+    assert.deepEqual(client, new Delta().insert("___"))
+
   it "tourture test", ->
 
     # every 2 seconds the client submits an operation

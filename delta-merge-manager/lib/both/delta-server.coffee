@@ -21,6 +21,21 @@ _.extend DeltaServer.prototype,
 
   current: (id) -> @connections[id].client
 
+  finalize: (id, base, client) ->
+    connection = @connections[id]
+
+    console.log(base, client)
+
+    # client's server should now be connection.client
+    # let's update client's base
+    client_base = base
+    client_server = connection.client
+    client_change = client_base.diff(client_server).transform(client_base.diff(client))
+
+    updated_client = client_server.compose(client_change)
+
+    return @fromClient(id, connection.client.diff(updated_client))
+
   fromClient: (id, diff) ->
     # Assume base: +a
     # Assume server: +ab
@@ -62,13 +77,13 @@ _.extend DeltaServer.prototype,
     update = connection.base.diff(@server).transform(connection.base.diff(connection.client))
 
     connection.paused = true
-    old_client = connection.client
+    connection.old_client = connection.client
     @toServer update, (err, result) =>
       if err
         throw err
 
       @server = result
-      connection.base = old_client
+      connection.base = connection.old_client
       connection.paused = false
 
   resyncServer: () ->

@@ -13,8 +13,11 @@ _.extend DeltaMergeManager.prototype,
 
     return @submitChanges(document_id, connection_id, message)
 
-  closeConnection: (document_id, connection_id) ->
+  closeConnection: (document_id, base, client, connection_id) ->
     connection = @getConnection document_id
+
+    if connection.connections[connection_id]?
+      connection.finalize(connection_id, new Delta(base), new Delta(client))
 
     # Mark this connection as disconnected
     delete connection.connections[connection_id]

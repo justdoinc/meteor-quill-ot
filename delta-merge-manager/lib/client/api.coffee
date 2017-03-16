@@ -92,13 +92,30 @@ _.extend DeltaMergeManager.prototype,
       100
 
     connection.destroy = () =>
+      if connection.destroyed
+        return
+
+      connection.destroyed = true
+
       editor.off 'text-change', on_change_callback
       Meteor.clearInterval update_handle
-      Meteor.call "#{@messages_collection_name}/closeConnection", document_id
+
+      c = connection.connections[client_id]
+      if c.paused
+        base = c.old_client
+        client = c.client
+      else
+        # indicate that no changes have been made by making base and client
+        # identical
+        base = new Delta()
+        client = new Delta()
+      Meteor.call "#{@messages_collection_name}/closeConnection", document_id, base, client
 
     if Tracker.currentComputation?
       Tracker.currentComputation.onStop =>
         connection.destroy()
+
+    @client_connections.push connection
 
     return connection
 
