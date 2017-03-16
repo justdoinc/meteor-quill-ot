@@ -98,8 +98,8 @@ DeltaMergeManager = (options) ->
         }
       )
 
-  # JustdoHelpers.loadEventEmitterHelperMethods(@)
-  # @loadEventsFromOptions() # loads @options.events, if exists
+  JustdoHelpers.loadEventEmitterHelperMethods(@)
+  @loadEventsFromOptions() # loads @options.events, if exists
 
   @_attachCollectionsSchemas()
 
@@ -133,7 +133,7 @@ DeltaMergeManager = (options) ->
 Util.inherits DeltaMergeManager, EventEmitter
 
 _.extend DeltaMergeManager.prototype,
-  # _error: JustdoHelpers.constructor_error
+  _error: JustdoHelpers.constructor_error
 
   _bothImmediateInit: ->
     # @_bothImmediateInit runs before the specific env's @_immediateInit()

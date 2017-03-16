@@ -26,7 +26,7 @@ Package.onUse(function (api) {
   api.use("raix:eventemitter@0.1.1", both);
   api.use("meteorspark:util@0.2.0", both);
   api.use("meteorspark:logger@0.3.0", both);
-  // api.use("justdoinc:justdo-helpers@1.0.0", both);
+  api.use("justdoinc:justdo-helpers@1.0.0", both);
 
   api.use("matb33:collection-hooks@0.8.4", both);
 

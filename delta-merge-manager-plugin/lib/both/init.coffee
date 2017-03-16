@@ -132,7 +132,7 @@ DeltaMergeManagerPlugin = (options) ->
 Util.inherits DeltaMergeManagerPlugin, EventEmitter
 
 _.extend DeltaMergeManagerPlugin.prototype,
-  # _error: JustdoHelpers.constructor_error
+  _error: JustdoHelpers.constructor_error
 
   _bothImmediateInit: ->
     # @_bothImmediateInit runs before the specific env's @_immediateInit()
