@@ -89,8 +89,11 @@ _.extend DeltaServer.prototype,
 
     update = connection.base.diff(@server).transform(connection.base.diff(connection.client))
 
-    if update.ops.length == 0
-      return
+    # XXX how to eliminate unnecessary updates without breaking the
+    # client-server sync process. (currently sync only happens on submitChanges)
+    # IDEA uncomment this line and call resyncServer from a setInterval timer
+    # if update.ops.length == 0
+    #   return
 
     connection.paused = true
     connection.old_client = connection.client
