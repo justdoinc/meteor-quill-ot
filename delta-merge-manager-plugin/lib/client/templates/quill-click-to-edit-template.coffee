@@ -8,8 +8,7 @@ Template.quill_click_to_edit.helpers
 
   mayEdit: -> @options?.mayEdit ? true
 
-  # XXX fix to use xss
-  cleanedHTML: -> @initial_html
+  cleanedHTML: -> JustdoHelpers.xssGuard @initial_html
 
 Template.quill_click_to_edit.events
 
@@ -22,7 +21,5 @@ Template.quill_click_to_edit.events
       tmpl.editing.set(true)
 
   'click .quill-click-to-edit-close-button': (e, tmpl) ->
-
-    # XXX ensure all outstanding edits are saved first.
 
     tmpl.editing.set(false)

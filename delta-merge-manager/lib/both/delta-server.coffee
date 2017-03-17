@@ -24,8 +24,6 @@ _.extend DeltaServer.prototype,
   finalize: (id, base, client) ->
     connection = @connections[id]
 
-    console.log(base, client)
-
     # client's server should now be connection.client
     # let's update client's base
     client_base = base
@@ -60,7 +58,6 @@ _.extend DeltaServer.prototype,
     if not connection.paused
       connection.base = @server
 
-    # XXX defer(toServer(@server.diff(@client)))
 
     return connection.client
 

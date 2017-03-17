@@ -39,16 +39,12 @@
       old_server.content = update
       callback(null, update)
 
-  console.log id
-
   result = store.upsert
     _id: id
   ,
     $setOnInsert:
       change_key: null
       content: new Delta()
-
-  console.log result
 
   server.resyncServer()
 
