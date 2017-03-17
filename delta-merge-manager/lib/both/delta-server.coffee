@@ -5,6 +5,9 @@ DeltaServer = @DeltaServer = ->
 
   return @
 
+# profile_time_total = [0, 0, 0]
+# profile_time_total_1 = [0, 0, 0]
+
 _.extend DeltaServer.prototype,
 
   connect: (id) ->
@@ -35,6 +38,8 @@ _.extend DeltaServer.prototype,
     return @fromClient(id, connection.client.diff(updated_client))
 
   fromClient: (id, diff) ->
+    # if Meteor.isServer
+    #   profile_start_time = process.hrtime()
     # Assume base: +a
     # Assume server: +ab
     # Assume client: +ac
@@ -58,10 +63,21 @@ _.extend DeltaServer.prototype,
     if not connection.paused
       connection.base = @server
 
+    # if Meteor.isServer
+    #   profile_duration_time = process.hrtime(profile_start_time)
+    #   profile_time_total = [ profile_duration_time[0] + profile_time_total[0], profile_duration_time[1] + profile_time_total[1], 1 + profile_time_total[2] ]
+    #   while profile_time_total[1] > 1e9
+    #     profile_time_total[1] = profile_time_total[1] - 1e9
+    #     profile_time_total[0] = profile_time_total[0] + 1
+    #
+    #   console.log "current: " + profile_duration_time[1], "average: " + (profile_time_total[0] * 1e9 + profile_time_total[1]) / profile_time_total[2], "count: " + profile_time_total[2], "total: " + (profile_time_total[0] * 1e9 + profile_time_total[1])
+
 
     return connection.client
 
   submitChanges: (id) ->
+    # if Meteor.isServer
+    #   profile_start_time = process.hrtime()
     # Assume base: +a
     # Assume server: +ab
     # Assume client: +ac
@@ -73,6 +89,9 @@ _.extend DeltaServer.prototype,
 
     update = connection.base.diff(@server).transform(connection.base.diff(connection.client))
 
+    if update.ops.length == 0
+      return
+
     connection.paused = true
     connection.old_client = connection.client
     @toServer update, (err, result) =>
@@ -82,6 +101,17 @@ _.extend DeltaServer.prototype,
       @server = result
       connection.base = connection.old_client
       connection.paused = false
+
+
+      # if Meteor.isServer
+      #   profile_duration_time = process.hrtime(profile_start_time)
+      #   profile_time_total_1 = [ profile_duration_time[0] + profile_time_total_1[0], profile_duration_time[1] + profile_time_total_1[1], 1 + profile_time_total_1[2] ]
+      #   while profile_time_total_1[1] > 1e9
+      #     profile_time_total_1[1] = profile_time_total_1[1] - 1e9
+      #     profile_time_total_1[0] = profile_time_total_1[0] + 1
+      #
+      #   console.log "toServer: " + profile_duration_time[1], "average: " + (profile_time_total_1[0] * 1e9 + profile_time_total_1[1]) / profile_time_total_1[2], "count: " + profile_time_total_1[2], "total: " + (profile_time_total_1[0] * 1e9 + profile_time_total_1[1])
+
 
   resyncServer: () ->
 
