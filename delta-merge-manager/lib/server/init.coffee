@@ -18,4 +18,8 @@ _.extend DeltaMergeManager.prototype,
     # Defined in collections-indexes.coffee
     @_ensureIndexesExists()
 
+    Meteor.onConnection (connection) =>
+      connection.onClose () =>
+        @cleanupConnection connection.id
+
     return

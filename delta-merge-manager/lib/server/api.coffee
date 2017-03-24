@@ -13,6 +13,19 @@ _.extend DeltaMergeManager.prototype,
 
     return @submitChanges(document_id, connection_id, message)
 
+  cleanupConnection: (connection_id) ->
+    connections = @connections
+
+    for document_id, connection of connections
+      if connection.connections[connection_id]?
+        # Ideally we'd call finalize here, but we can't because we don't have
+        # the client's last status, so we just delete the connection.
+        delete connection.connections[connection_id]
+
+        if not _.any connection.connections
+          # @documents.remove { _id: document_id }
+          delete @connections[document_id]
+
   closeConnection: (document_id, base, client, connection_id) ->
     connection = @getConnection document_id
 
